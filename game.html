@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coup de génie - Mode Solo</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Styles spécifiques à la page de jeu -->
+    <link rel="stylesheet" href="assets/css/game.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Firebase configuration and functions -->
+    <script src="js/firebase.js"></script>
+    <div class="container">
+        <!-- Header du jeu -->
+        <header class="game-header">
+            <a href="index.html" class="logo-link">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>Coup de génie</span>
+                </div>
+            </a>
+            
+            <!-- Barre de progression -->
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <span class="progress-text" id="progressText">Question 1/10</span>
+            </div>
+            
+            <!-- Score et chrono -->
+            <div class="game-stats">
+                <div class="stat-box">
+                    <i class="fas fa-star stat-icon"></i>
+                    <span class="stat-value" id="scoreValue">0</span>
+                </div>
+                <div class="stat-box timer-box" id="timerBox">
+                    <i class="fas fa-clock stat-icon"></i>
+                    <span class="stat-value" id="timerValue">30</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Zone de jeu principale -->
+        <main class="game-content">
+            <!-- Carte de question -->
+            <div class="question-card" id="questionCard">
+                <div class="question-number" id="questionNumber">Question 1</div>
+                <h2 class="question-text" id="questionText">Chargement de la question...</h2>
+                
+                <!-- Catégorie de la question -->
+                <div class="question-category" id="questionCategory">
+                    <i class="fas fa-book category-icon"></i>
+                    <span class="category-name">Culture Générale</span>
+                </div>
+            </div>
+
+            <!-- Grille de réponses -->
+            <div class="answers-grid" id="answersGrid">
+                <button class="answer-btn" data-answer="0">
+                    <span class="answer-letter">A</span>
+                    <span class="answer-text">Réponse A</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="1">
+                    <span class="answer-letter">B</span>
+                    <span class="answer-text">Réponse B</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="2">
+                    <span class="answer-letter">C</span>
+                    <span class="answer-text">Réponse C</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="3">
+                    <span class="answer-letter">D</span>
+                    <span class="answer-text">Réponse D</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+            </div>
+
+            <!-- Feedback de réponse -->
+            <div class="answer-feedback" id="answerFeedback">
+                <div class="feedback-content">
+                    <i class="fas fa-check feedback-icon" id="feedbackIcon"></i>
+                    <p class="feedback-text" id="feedbackText">Bonne réponse !</p>
+                    <p class="feedback-explanation" id="feedbackExplanation"></p>
+                </div>
+            </div>
+
+            <!-- Bouton suivant -->
+            <div class="action-container">
+                <button class="btn btn-next" id="btnNext" style="display: none;">
+                    <span class="btn-text">Question suivante</span>
+                    <i class="fas fa-arrow-right btn-icon"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Modal de fin de partie -->
+        <div class="game-over-modal" id="gameOverModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalTitle">
+                        <i class="fas fa-trophy"></i>
+                        Quiz terminé !
+                    </h2>
+                </div>
+                <div class="modal-body">
+                    <div class="final-score">
+                        <div class="score-circle">
+                            <span class="score-value" id="finalScore">0</span>
+                            <span class="score-max">/10</span>
+                        </div>
+                        <p class="score-message" id="scoreMessage">Excellent travail !</p>
+                    </div>
+                    
+                    <div class="game-summary">
+                        <div class="summary-item">
+                            <i class="fas fa-check summary-icon"></i>
+                            <span class="summary-label">Bonnes réponses</span>
+                            <span class="summary-value" id="correctAnswers">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <i class="fas fa-times summary-icon"></i>
+                            <span class="summary-label">Mauvaises réponses</span>
+                            <span class="summary-value" id="wrongAnswers">0</span>
+                        </div>
+                        <div class="summary-item">
+                            <i class="fas fa-bolt summary-icon"></i>
+                            <span class="summary-label">Temps moyen</span>
+                            <span class="summary-value" id="avgTime">0s</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="btnReplay">
+                        <i class="fas fa-rotate-right btn-icon"></i>
+                        <span class="btn-text">Rejouer</span>
+                    </button>
+                    <button class="btn btn-primary" id="btnHome">
+                        <i class="fas fa-home btn-icon"></i>
+                        <span class="btn-text">Accueil</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de sélection de catégories -->
+    <div class="category-modal" id="categoryModal">
+        <div class="category-modal-content">
+            <div class="category-modal-header">
+                <h2 class="category-modal-title">
+                    <i class="fas fa-list-check"></i>
+                    Choisissez vos catégories
+                </h2>
+                <p class="category-modal-subtitle">Sélectionnez jusqu'à 5 catégories ou jouez avec toutes</p>
+            </div>
+            
+            <div class="category-modal-body">
+                <!-- Bouton "Toutes les catégories" -->
+                <button class="category-all-btn" id="categoryAllBtn">
+                    <i class="fas fa-globe"></i>
+                    <span>Toutes les catégories</span>
+                    <i class="fas fa-check category-check"></i>
+                </button>
+                
+                <!-- Grille de catégories -->
+                <div class="categories-grid" id="categoriesGrid">
+                    <!-- Les catégories seront générées dynamiquement par JS -->
+                </div>
+                
+                <!-- Compteur de sélection -->
+                <div class="category-counter">
+                    <span id="categoryCount">0</span> / 5 catégories sélectionnées
+                </div>
+            </div>
+            
+            <div class="category-modal-footer">
+                <button class="btn btn-secondary" id="btnCancelCategory">
+                    <i class="fas fa-arrow-left btn-icon"></i>
+                    <span class="btn-text">Retour</span>
+                </button>
+                <button class="btn btn-primary" id="btnStartGame" disabled>
+                    <i class="fas fa-play btn-icon"></i>
+                    <span class="btn-text">Commencer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Particules d'animation en arrière-plan -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Canvas pour les confettis -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/questions.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>

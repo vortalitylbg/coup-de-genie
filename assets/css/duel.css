@@ -1,0 +1,1023 @@
+/* ===========================
+   DUEL.CSS - Mode Duel Compétitif
+   Design dynamique et agressif pour le PvP
+   =========================== */
+
+/* ===========================
+   DUEL HEADER - Affrontement des joueurs
+   =========================== */
+.duel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    margin-bottom: 2rem;
+    border: 2px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.duel-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(180deg, transparent, var(--primary-purple), transparent);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Cartes des joueurs */
+.player-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    background: var(--bg-glass);
+    border-radius: 1rem;
+    min-width: 220px;
+    border: 2px solid var(--border-color);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.player-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), transparent);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.player-card:hover::before {
+    opacity: 1;
+}
+
+/* Joueur actuel - Effet glow */
+.player-card.current-player {
+    border: 3px solid var(--primary-purple);
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+    transform: scale(1.05);
+}
+
+/* Animation quand le joueur répond */
+.player-card.answered {
+    animation: answerPulse 0.6s ease;
+}
+
+@keyframes answerPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+        box-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+    }
+}
+
+/* Animation pour bonne réponse */
+.player-card.correct-answer {
+    animation: correctGlow 1s ease;
+    border-color: var(--success);
+}
+
+@keyframes correctGlow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 50px rgba(16, 185, 129, 0.8);
+        transform: scale(1.08);
+    }
+}
+
+/* Animation pour mauvaise réponse */
+.player-card.wrong-answer {
+    animation: wrongShake 0.5s ease;
+    border-color: var(--error);
+}
+
+@keyframes wrongShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-8px);
+    }
+    75% {
+        transform: translateX(8px);
+    }
+}
+
+.player-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.player-elo {
+    font-size: 0.95rem;
+    color: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+}
+
+.player-score {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--primary-purple);
+    text-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+    position: relative;
+    z-index: 1;
+    transition: all var(--transition-normal);
+}
+
+/* Animation du score qui augmente */
+.player-score.score-increase {
+    animation: scoreIncrease 0.6s ease;
+}
+
+@keyframes scoreIncrease {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.4);
+        color: var(--accent-gold);
+        text-shadow: 0 0 30px rgba(251, 191, 36, 0.8);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Badge VS */
+.vs-badge {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    animation: vsFloat 3s ease-in-out infinite;
+    position: relative;
+    z-index: 2;
+}
+
+@keyframes vsFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(-5deg);
+    }
+    50% {
+        transform: translateY(-10px) rotate(5deg);
+    }
+}
+
+/* Indicateur de combo */
+.combo-indicator {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--accent-gold);
+    color: var(--bg-darker);
+    font-size: 0.85rem;
+    font-weight: 800;
+    padding: 0.3rem 0.6rem;
+    border-radius: 50px;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+    animation: comboPulse 0.8s ease-in-out infinite;
+    z-index: 3;
+}
+
+@keyframes comboPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
+/* ===========================
+   MATCHMAKING SCREEN
+   =========================== */
+.matchmaking-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 2.5rem;
+    animation: fadeInUp 0.6s ease;
+}
+
+.matchmaking-spinner {
+    width: 120px;
+    height: 120px;
+    border: 5px solid var(--border-color);
+    border-top: 5px solid var(--primary-purple);
+    border-right: 5px solid var(--primary-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.3);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.matchmaking-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-align: center;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ===========================
+   WAITING SCREEN - Adversaire trouvé
+   =========================== */
+.waiting-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 2rem;
+    animation: fadeInUp 0.6s ease;
+}
+
+.opponent-found {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2.5rem;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-lg);
+    animation: bounceIn 0.8s ease;
+}
+
+.opponent-info {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.ready-status {
+    display: flex;
+    gap: 3rem;
+    margin-top: 1.5rem;
+}
+
+.ready-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.ready-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: var(--bg-glass);
+    border: 3px solid var(--border-color);
+    transition: all var(--transition-normal);
+}
+
+.ready-icon.ready {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    animation: readyPulse 1s ease-in-out infinite;
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes readyPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ===========================
+   COUNTDOWN - Compte à rebours
+   =========================== */
+.countdown {
+    font-size: 6rem;
+    font-weight: 900;
+    color: var(--accent-gold);
+    text-shadow: 0 0 40px rgba(251, 191, 36, 0.8);
+    animation: countdownPulse 1s ease-in-out;
+}
+
+@keyframes countdownPulse {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.3);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===========================
+   QUESTION CARD - Style compétitif
+   =========================== */
+.question-card {
+    background: var(--bg-card);
+    border: 3px solid var(--border-color);
+    border-radius: 2rem;
+    padding: 3rem;
+    backdrop-filter: blur(30px);
+    box-shadow: var(--shadow-lg);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    animation: slideInDown 0.5s ease;
+}
+
+.question-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.question-card:hover::before {
+    opacity: 1;
+}
+
+.question-number {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.question-text {
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.question-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--primary-purple);
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+/* ===========================
+   ANSWERS - Boutons de réponse dynamiques
+   =========================== */
+.answers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.answer-btn {
+    padding: 1.8rem 2rem;
+    background: var(--bg-glass);
+    border: 3px solid var(--border-color);
+    border-radius: 1.5rem;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    backdrop-filter: blur(10px);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.answer-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.answer-btn:hover:not(.correct):not(.wrong):not(.disabled) {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--primary-purple);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}
+
+.answer-btn:hover:not(.correct):not(.wrong):not(.disabled)::before {
+    opacity: 1;
+}
+
+.answer-btn:active:not(.disabled) {
+    transform: scale(0.98);
+}
+
+/* Réponse correcte - Explosion verte */
+.answer-btn.correct {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    animation: correctExplosion 0.8s ease;
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.8);
+}
+
+@keyframes correctExplosion {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.15);
+        box-shadow: 0 0 60px rgba(16, 185, 129, 1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Réponse incorrecte - Vibration rouge */
+.answer-btn.wrong {
+    background: var(--error);
+    border-color: var(--error);
+    color: white;
+    animation: wrongVibrate 0.6s ease;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
+}
+
+@keyframes wrongVibrate {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-10px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(10px);
+    }
+}
+
+.answer-btn.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.answer-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--primary-purple);
+    border-radius: 50%;
+    font-weight: 800;
+    color: white;
+    flex-shrink: 0;
+    transition: all var(--transition-normal);
+}
+
+.answer-btn:hover:not(.disabled) .answer-letter {
+    transform: rotate(360deg) scale(1.2);
+}
+
+.answer-btn.correct .answer-letter {
+    background: white;
+    color: var(--success);
+}
+
+.answer-btn.wrong .answer-letter {
+    background: white;
+    color: var(--error);
+}
+
+.answer-text {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+/* Icônes de feedback */
+.answer-check,
+.answer-cross {
+    position: absolute;
+    right: 1.5rem;
+    font-size: 2rem;
+    opacity: 0;
+    transition: all var(--transition-normal);
+}
+
+.answer-btn.correct .answer-check {
+    opacity: 1;
+    animation: checkAppear 0.5s ease;
+}
+
+.answer-btn.wrong .answer-cross {
+    opacity: 1;
+    animation: crossAppear 0.5s ease;
+}
+
+@keyframes checkAppear {
+    0% {
+        transform: scale(0) rotate(-180deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+@keyframes crossAppear {
+    0% {
+        transform: scale(0) rotate(180deg);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1) rotate(0);
+        opacity: 1;
+    }
+}
+
+/* ===========================
+   ANSWER FEEDBACK
+   =========================== */
+.answer-feedback {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    border-radius: 1.5rem;
+    display: none;
+    animation: slideInUp 0.5s ease;
+}
+
+.answer-feedback.show {
+    display: block;
+}
+
+.answer-feedback.correct {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.answer-feedback.wrong {
+    border-color: var(--error);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.feedback-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feedback-icon.correct {
+    color: var(--success);
+    animation: bounce 0.6s ease;
+}
+
+.feedback-icon.wrong {
+    color: var(--error);
+    animation: shake 0.6s ease;
+}
+
+.feedback-text {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+}
+
+.feedback-text.correct {
+    color: var(--success);
+}
+
+.feedback-text.wrong {
+    color: var(--error);
+}
+
+.feedback-explanation {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ===========================
+   RESULTS SCREEN
+   =========================== */
+.duel-results {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.5rem;
+    padding: 2rem;
+    animation: fadeInUp 0.8s ease;
+}
+
+.result-header {
+    text-align: center;
+}
+
+.result-title {
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px currentColor;
+    animation: bounceIn 1s ease;
+}
+
+.result-title.victory {
+    color: var(--success);
+}
+
+.result-title.defeat {
+    color: var(--error);
+}
+
+.result-title.draw {
+    color: var(--accent-gold);
+}
+
+.elo-change {
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+    animation: slideInDown 0.8s ease 0.3s both;
+}
+
+.elo-change.positive {
+    color: var(--success);
+}
+
+.elo-change.negative {
+    color: var(--error);
+}
+
+.players-comparison {
+    display: flex;
+    gap: 2rem;
+    width: 100%;
+    max-width: 900px;
+}
+
+.player-result {
+    flex: 1;
+    padding: 2rem;
+    background: var(--bg-card);
+    border-radius: 1.5rem;
+    border: 2px solid var(--border-color);
+    transition: all var(--transition-normal);
+    animation: slideInUp 0.8s ease 0.5s both;
+}
+
+.player-result:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.player-result.winner {
+    border-color: var(--success);
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.4);
+    transform: scale(1.05);
+}
+
+.player-result.winner::before {
+    content: '👑';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    animation: crownFloat 2s ease-in-out infinite;
+}
+
+@keyframes crownFloat {
+    0%, 100% {
+        transform: translateX(-50%) translateY(0);
+    }
+    50% {
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
+.player-result-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.player-result-score {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--primary-purple);
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.player-result-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.player-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-glass);
+    border-radius: 0.75rem;
+    font-size: 1rem;
+}
+
+.player-stat-label {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.player-stat-value {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* ===========================
+   TIMER EFFECTS
+   =========================== */
+.timer-box.warning {
+    border-color: var(--warning) !important;
+    background: rgba(245, 158, 11, 0.15) !important;
+}
+
+.timer-box.warning .stat-icon {
+    color: var(--warning) !important;
+}
+
+.timer-box.danger {
+    border-color: var(--error) !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+}
+
+.timer-box.danger .stat-icon {
+    color: var(--error) !important;
+}
+
+/* ===========================
+   ACTION CONTAINER
+   =========================== */
+.action-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn-next {
+    padding: 1.2rem 3rem;
+    font-size: 1.2rem;
+    border-radius: 50px;
+    animation: slideInUp 0.5s ease;
+}
+
+/* ===========================
+   UTILITY CLASSES
+   =========================== */
+.hidden {
+    display: none !important;
+}
+
+/* ===========================
+   BATTLE EFFECTS - Effets de combat
+   =========================== */
+.battle-flash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+.battle-flash.correct {
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+    animation: flashCorrect 0.5s ease;
+}
+
+.battle-flash.wrong {
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+    animation: flashWrong 0.5s ease;
+}
+
+@keyframes flashCorrect {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes flashWrong {
+    0%, 100% {
+        opacity: 0;
+    }
+    25%, 75% {
+        opacity: 1;
+    }
+}
+
+/* ===========================
+   PROGRESS BAR ANIMATION
+   =========================== */
+.progress-bar {
+    transition: width 0.5s ease, background 0.3s ease;
+}
+
+.progress-bar.danger {
+    background: linear-gradient(90deg, var(--error), var(--warning));
+}
+
+/* ===========================
+   CATEGORY MODAL IMPROVEMENTS
+   =========================== */
+.category-modal {
+    animation: fadeIn 0.3s ease;
+}
+
+.category-modal-content {
+    animation: slideInDown 0.5s ease;
+}
+
+/* ===========================
+   HOVER EFFECTS ENHANCEMENT
+   =========================== */
+.player-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+}
+
+.answer-btn:hover:not(.disabled) {
+    box-shadow: 0 10px 40px rgba(124, 58, 237, 0.5);
+}
+
+/* ===========================
+   LOADING STATES
+   =========================== */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.loading-spinner-large {
+    width: 80px;
+    height: 80px;
+    border: 5px solid var(--border-color);
+    border-top: 5px solid var(--primary-purple);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* ===========================
+   RESPONSIVE
+   =========================== */
+@media (max-width: 768px) {
+    .duel-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .player-card {
+        min-width: 180px;
+    }
+    
+    .vs-badge {
+        font-size: 2rem;
+        transform: rotate(90deg);
+    }
+    
+    .answers-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .players-comparison {
+        flex-direction: column;
+    }
+    
+    .question-text {
+        font-size: 1.5rem;
+    }
+    
+    .result-title {
+        font-size: 2.5rem;
+    }
+    
+    .opponent-info {
+        flex-direction: column;
+    }
+    
+    .ready-status {
+        gap: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .player-card {
+        min-width: 150px;
+        padding: 1rem;
+    }
+    
+    .player-score {
+        font-size: 2rem;
+    }
+    
+    .question-card {
+        padding: 2rem;
+    }
+    
+    .answer-btn {
+        padding: 1.2rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .countdown {
+        font-size: 4rem;
+    }
+    
+    .matchmaking-spinner {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .matchmaking-text {
+        font-size: 1.2rem;
+    }
+}

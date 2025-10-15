@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coup de génie - Mode Duel</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Styles spécifiques au jeu -->
+    <link rel="stylesheet" href="assets/css/game.css">
+    <!-- Styles spécifiques au duel -->
+    <link rel="stylesheet" href="assets/css/duel.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header du duel -->
+        <header class="game-header">
+            <a href="index.html" class="logo-link">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>Coup de génie</span>
+                </div>
+            </a>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <span class="progress-text" id="progressText">Mode Duel</span>
+            </div>
+            
+            <div class="game-stats">
+                <div class="stat-box timer-box" id="timerBox">
+                    <i class="fas fa-clock stat-icon"></i>
+                    <span class="stat-value" id="timerValue">30</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Écran de matchmaking -->
+        <div class="matchmaking-screen" id="matchmakingScreen">
+            <div class="matchmaking-spinner"></div>
+            <div class="matchmaking-text">
+                <p>Recherche d'un adversaire...</p>
+                <p style="font-size: 1rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                    Matchmaking basé sur votre ELO
+                </p>
+            </div>
+            <button class="btn btn-secondary" id="btnCancelMatchmaking">
+                <i class="fas fa-times btn-icon"></i>
+                <span class="btn-text">Annuler</span>
+            </button>
+        </div>
+
+        <!-- Écran d'attente (adversaire trouvé) -->
+        <div class="waiting-screen hidden" id="waitingScreen">
+            <div class="opponent-found">
+                <h2 style="color: var(--success); font-size: 1.5rem;">
+                    <i class="fas fa-check-circle"></i>
+                    Adversaire trouvé !
+                </h2>
+                <div class="opponent-info">
+                    <div class="player-card">
+                        <i class="fas fa-user" style="font-size: 2rem; color: var(--primary-purple);"></i>
+                        <span class="player-name" id="player1Name">Vous</span>
+                        <span class="player-elo">
+                            <i class="fas fa-trophy"></i>
+                            <span id="player1Elo">1000</span> ELO
+                        </span>
+                    </div>
+                    <span class="vs-badge">VS</span>
+                    <div class="player-card">
+                        <i class="fas fa-user" style="font-size: 2rem; color: var(--primary-blue);"></i>
+                        <span class="player-name" id="player2Name">Adversaire</span>
+                        <span class="player-elo">
+                            <i class="fas fa-trophy"></i>
+                            <span id="player2Elo">1000</span> ELO
+                        </span>
+                    </div>
+                </div>
+                <div class="ready-status">
+                    <div class="ready-indicator">
+                        <div class="ready-icon" id="player1Ready">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <span id="player1Name2">Vous</span>
+                    </div>
+                    <div class="ready-indicator">
+                        <div class="ready-icon" id="player2Ready">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <span id="player2Name2">Adversaire</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btnReady">
+                    <i class="fas fa-check btn-icon"></i>
+                    <span class="btn-text">Je suis prêt !</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Écran de compte à rebours -->
+        <div class="waiting-screen hidden" id="countdownScreen">
+            <h2 style="font-size: 2rem; color: var(--text-primary);">Le duel commence dans...</h2>
+            <div class="countdown" id="countdownValue">3</div>
+        </div>
+
+        <!-- Zone de jeu principale -->
+        <main class="game-content hidden" id="gameContent">
+            <!-- Header des joueurs -->
+            <div class="duel-header">
+                <div class="player-card current-player" id="player1Card">
+                    <span class="player-name" id="player1NameGame">Vous</span>
+                    <span class="player-elo">
+                        <i class="fas fa-trophy"></i>
+                        <span id="player1EloGame">1000</span> ELO
+                    </span>
+                    <span class="player-score" id="player1Score">0</span>
+                </div>
+                
+                <span class="vs-badge">VS</span>
+                
+                <div class="player-card" id="player2Card">
+                    <span class="player-name" id="player2NameGame">Adversaire</span>
+                    <span class="player-elo">
+                        <i class="fas fa-trophy"></i>
+                        <span id="player2EloGame">1000</span> ELO
+                    </span>
+                    <span class="player-score" id="player2Score">0</span>
+                </div>
+            </div>
+
+            <!-- Carte de question -->
+            <div class="question-card" id="questionCard">
+                <div class="question-number" id="questionNumber">Question 1</div>
+                <h2 class="question-text" id="questionText">Chargement de la question...</h2>
+                
+                <div class="question-category" id="questionCategory">
+                    <i class="fas fa-book category-icon"></i>
+                    <span class="category-name">Culture Générale</span>
+                </div>
+            </div>
+
+            <!-- Grille de réponses -->
+            <div class="answers-grid" id="answersGrid">
+                <button class="answer-btn" data-answer="0">
+                    <span class="answer-letter">A</span>
+                    <span class="answer-text">Réponse A</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="1">
+                    <span class="answer-letter">B</span>
+                    <span class="answer-text">Réponse B</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="2">
+                    <span class="answer-letter">C</span>
+                    <span class="answer-text">Réponse C</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+                <button class="answer-btn" data-answer="3">
+                    <span class="answer-letter">D</span>
+                    <span class="answer-text">Réponse D</span>
+                    <i class="fas fa-check answer-check"></i>
+                    <i class="fas fa-times answer-cross"></i>
+                </button>
+            </div>
+
+            <!-- Feedback de réponse -->
+            <div class="answer-feedback" id="answerFeedback">
+                <div class="feedback-content">
+                    <i class="fas fa-check feedback-icon" id="feedbackIcon"></i>
+                    <p class="feedback-text" id="feedbackText">Bonne réponse !</p>
+                    <p class="feedback-explanation" id="feedbackExplanation"></p>
+                </div>
+            </div>
+
+            <!-- Bouton suivant -->
+            <div class="action-container">
+                <button class="btn btn-next" id="btnNext" style="display: none;">
+                    <span class="btn-text">Question suivante</span>
+                    <i class="fas fa-arrow-right btn-icon"></i>
+                </button>
+            </div>
+        </main>
+
+        <!-- Écran de résultats -->
+        <div class="duel-results hidden" id="resultsScreen">
+            <div class="result-header">
+                <h1 class="result-title" id="resultTitle">Victoire !</h1>
+                <div class="elo-change" id="eloChange">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+25 ELO</span>
+                </div>
+            </div>
+
+            <div class="players-comparison">
+                <div class="player-result" id="player1Result">
+                    <h3 class="player-result-name" id="player1NameResult">Vous</h3>
+                    <div class="player-result-score" id="player1FinalScore">0</div>
+                    <div class="player-result-stats">
+                        <div class="player-stat">
+                            <span class="player-stat-label">
+                                <i class="fas fa-check"></i> Bonnes réponses
+                            </span>
+                            <span class="player-stat-value" id="player1Correct">0</span>
+                        </div>
+                        <div class="player-stat">
+                            <span class="player-stat-label">
+                                <i class="fas fa-trophy"></i> Nouvel ELO
+                            </span>
+                            <span class="player-stat-value" id="player1NewElo">1000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="player-result" id="player2Result">
+                    <h3 class="player-result-name" id="player2NameResult">Adversaire</h3>
+                    <div class="player-result-score" id="player2FinalScore">0</div>
+                    <div class="player-result-stats">
+                        <div class="player-stat">
+                            <span class="player-stat-label">
+                                <i class="fas fa-check"></i> Bonnes réponses
+                            </span>
+                            <span class="player-stat-value" id="player2Correct">0</span>
+                        </div>
+                        <div class="player-stat">
+                            <span class="player-stat-label">
+                                <i class="fas fa-trophy"></i> Nouvel ELO
+                            </span>
+                            <span class="player-stat-value" id="player2NewElo">1000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button class="btn btn-secondary" id="btnViewLeaderboard">
+                    <i class="fas fa-ranking-star btn-icon"></i>
+                    <span class="btn-text">Classement</span>
+                </button>
+                <button class="btn btn-primary" id="btnPlayAgain">
+                    <i class="fas fa-rotate-right btn-icon"></i>
+                    <span class="btn-text">Rejouer</span>
+                </button>
+                <button class="btn btn-secondary" id="btnHome">
+                    <i class="fas fa-home btn-icon"></i>
+                    <span class="btn-text">Accueil</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de sélection de catégories -->
+    <div class="category-modal" id="categoryModal">
+        <div class="category-modal-content">
+            <div class="category-modal-header">
+                <h2 class="category-modal-title">
+                    <i class="fas fa-swords"></i>
+                    Mode Duel
+                </h2>
+                <p class="category-modal-subtitle">Affrontez un adversaire sur 3 questions de culture générale</p>
+            </div>
+            
+            <div class="category-modal-body">
+                <button class="category-all-btn" id="categoryAllBtn">
+                    <i class="fas fa-globe"></i>
+                    <span>Toutes les catégories</span>
+                    <i class="fas fa-check category-check"></i>
+                </button>
+                
+                <div class="categories-grid" id="categoriesGrid">
+                    <!-- Les catégories seront générées dynamiquement par JS -->
+                </div>
+                
+                <div class="category-counter">
+                    <span id="categoryCount">0</span> / 5 catégories sélectionnées
+                </div>
+            </div>
+            
+            <div class="category-modal-footer">
+                <button class="btn btn-secondary" id="btnCancelCategory">
+                    <i class="fas fa-arrow-left btn-icon"></i>
+                    <span class="btn-text">Retour</span>
+                </button>
+                <button class="btn btn-primary" id="btnStartDuel" disabled>
+                    <i class="fas fa-swords btn-icon"></i>
+                    <span class="btn-text">Chercher un adversaire</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Particules d'animation en arrière-plan -->
+    <div class="particles" id="particles"></div>
+    
+    <!-- Canvas pour les confettis -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Firebase CDN Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/questions.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/duel.js"></script>
+</body>
+</html>

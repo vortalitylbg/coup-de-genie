@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coup de génie - Quiz de Culture Générale</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Styles spécifiques à la page d'accueil -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header avec connexion -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-brain"></i>
+                <span>Coup de génie</span>
+            </div>
+            <button class="btn-connexion" id="btnConnexion">
+                <i class="fas fa-user"></i>
+                <span>Connexion</span>
+            </button>
+        </header>
+
+        <!-- Section principale -->
+        <main class="main-content">
+            <!-- Titre principal avec animation -->
+            <div class="hero-section">
+                <h1 class="main-title">
+                    <span class="title-word">Coup de génie</span>
+                </h1>
+                <p class="subtitle">Le quiz de culture générale qui rend accro !</p>
+            </div>
+
+            <!-- Présentation du jeu -->
+            <div class="game-description">
+                <p class="description-text">
+                    Testez votre culture générale et défiez vos amis !
+                </p>
+                <div class="features">
+                    <span class="feature">
+                        <i class="fas fa-bolt"></i>
+                        <span>Rapide</span>
+                    </span>
+                    <span class="feature">
+                        <i class="fas fa-fire"></i>
+                        <span>Addictif</span>
+                    </span>
+                    <span class="feature">
+                        <i class="fas fa-trophy"></i>
+                        <span>Compétitif</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Boutons d'action -->
+            <div class="action-buttons">
+                <button class="btn btn-primary btn-duel" id="btnDuel" style="background: linear-gradient(135deg, #ef4444, #f59e0b);">
+                    <i class="fas fa-swords btn-icon"></i>
+                    <span class="btn-text">Mode Duel</span>
+                    <div class="btn-shine"></div>
+                </button>
+                
+                <button class="btn btn-secondary btn-play" id="btnPlay">
+                    <i class="fas fa-play btn-icon"></i>
+                    <span class="btn-text">Mode Solo</span>
+                    <div class="btn-shine"></div>
+                </button>
+                
+                <button class="btn btn-secondary btn-classement" id="btnClassement">
+                    <i class="fas fa-ranking-star btn-icon"></i>
+                    <span class="btn-text">Classement</span>
+                </button>
+            </div>
+
+            <!-- Stats en temps réel -->
+            <div class="stats-section">
+                <div class="stat-item">
+                    <i class="fas fa-users stat-icon"></i>
+                    <div class="stat-number">12,547</div>
+                    <div class="stat-label">Joueurs actifs</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-question-circle stat-icon"></i>
+                    <div class="stat-number">1.2M</div>
+                    <div class="stat-label">Questions répondues</div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-star stat-icon"></i>
+                    <div class="stat-number">4.8</div>
+                    <div class="stat-label">Note moyenne</div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Made with <i class="fas fa-heart"></i> for quiz lovers</p>
+        </footer>
+    </div>
+
+    <!-- Particules d'animation en arrière-plan -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
