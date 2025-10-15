@@ -416,22 +416,22 @@ async function getUserStats(userId) {
 // ===========================
 
 /**
- * Calculer le changement d'ELO après un duel
+ * Calculer le changement d'ELO après un duel (basé sur le temps restant)
+ * Plus le vainqueur a de temps restant, plus il gagne d'ELO
  */
-function calculateEloChange(winnerElo, loserElo, isDraw = false) {
-    const K = 32; // Facteur K (sensibilité du changement)
+function calculateEloChange(winnerElo, loserElo, winnerTimeRemaining = 30) {
+    const K = 32; // Facteur K de base
+    
+    // Multiplicateur basé sur le temps restant (0 à 60 secondes)
+    // 60s restant = x2.0, 30s = x1.5, 10s = x1.2, 0s = x1.0
+    const timeMultiplier = 1 + (winnerTimeRemaining / 60);
+    const adjustedK = K * timeMultiplier;
     
     const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
     const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
     
-    if (isDraw) {
-        const winnerChange = Math.round(K * (0.5 - expectedWinner));
-        const loserChange = Math.round(K * (0.5 - expectedLoser));
-        return { winnerChange, loserChange };
-    }
-    
-    const winnerChange = Math.round(K * (1 - expectedWinner));
-    const loserChange = Math.round(K * (0 - expectedLoser));
+    const winnerChange = Math.round(adjustedK * (1 - expectedWinner));
+    const loserChange = Math.round(adjustedK * (0 - expectedLoser));
     
     return { winnerChange, loserChange };
 }
@@ -469,15 +469,18 @@ async function createDuel(categories) {
                 uid: user.uid,
                 displayName: user.displayName || user.email,
                 elo: playerElo,
-                score: 0,
-                answers: [],
+                timeRemaining: 60, // 60 secondes par joueur
+                correctAnswers: 0,
+                wrongAnswers: 0,
                 ready: false
             },
             player2: null,
             status: 'waiting', // waiting, ready, playing, finished
             categories: categories,
-            currentQuestion: 0,
+            activePlayer: null, // 1 ou 2 (sera défini au démarrage)
+            currentQuestionIndex: 0,
             questions: [],
+            penaltyUntil: null, // Timestamp de fin de pénalité
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             expiresAt: firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 1000)) // 5 minutes
         });
@@ -550,9 +553,9 @@ async function joinDuel(categories) {
             return await createDuel(categories);
         }
         
-        // Sélectionner les questions pour le duel
+        // Sélectionner un grand nombre de questions (pool illimité)
         console.log('❓ Sélection des questions...');
-        const questions = await selectDuelQuestions(categories, 3);
+        const questions = await selectDuelQuestions(categories, 50); // Pool de 50 questions
         console.log('✅ Questions sélectionnées:', questions.length);
         
         // Mettre à jour le duel
@@ -562,8 +565,9 @@ async function joinDuel(categories) {
                 uid: user.uid,
                 displayName: user.displayName || user.email,
                 elo: playerElo,
-                score: 0,
-                answers: [],
+                timeRemaining: 60, // 60 secondes par joueur
+                correctAnswers: 0,
+                wrongAnswers: 0,
                 ready: false
             },
             status: 'ready',
@@ -625,9 +629,22 @@ async function setPlayerReady(duelId, playerNumber) {
         const duelData = duelDoc.data();
         
         if (duelData.player1.ready && duelData.player2.ready) {
+            // Déterminer qui commence (ELO le plus bas, ou aléatoire si égalité)
+            let startingPlayer;
+            if (duelData.player1.elo < duelData.player2.elo) {
+                startingPlayer = 1;
+            } else if (duelData.player2.elo < duelData.player1.elo) {
+                startingPlayer = 2;
+            } else {
+                // ELO égal : choix aléatoire
+                startingPlayer = Math.random() < 0.5 ? 1 : 2;
+            }
+            
             await db.collection('duels').doc(duelId).update({
                 status: 'playing',
-                startedAt: firebase.firestore.FieldValue.serverTimestamp()
+                activePlayer: startingPlayer,
+                startedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastTimerUpdate: firebase.firestore.FieldValue.serverTimestamp()
             });
         }
         
@@ -640,9 +657,9 @@ async function setPlayerReady(duelId, playerNumber) {
 }
 
 /**
- * Soumettre une réponse dans un duel
+ * Soumettre une réponse dans un duel (nouveau système "12 Coups de Midi")
  */
-async function submitDuelAnswer(duelId, playerNumber, questionIndex, answerIndex, timeSpent) {
+async function submitDuelAnswer(duelId, playerNumber, answerIndex) {
     try {
         const user = getCurrentUser();
         if (!user) {
@@ -651,40 +668,41 @@ async function submitDuelAnswer(duelId, playerNumber, questionIndex, answerIndex
         
         const duelDoc = await db.collection('duels').doc(duelId).get();
         const duelData = duelDoc.data();
-        const question = duelData.questions[questionIndex];
         
-        const isCorrect = answerIndex === question.correct;
-        
-        // Calculer les points (max 1000 points par question)
-        // 500 points de base + 500 points bonus selon le temps (30s max)
-        let points = 0;
-        if (isCorrect) {
-            const basePoints = 500;
-            const timeBonus = Math.max(0, 500 * (1 - timeSpent / 30));
-            points = Math.round(basePoints + timeBonus);
+        // Vérifier que c'est bien le tour du joueur
+        if (duelData.activePlayer !== playerNumber) {
+            return { success: false, error: 'Ce n\'est pas votre tour' };
         }
         
-        const answer = {
-            questionIndex,
-            answerIndex,
-            isCorrect,
-            timeSpent,
-            points
-        };
+        // Vérifier si on est en période de pénalité
+        if (duelData.penaltyUntil && duelData.penaltyUntil.toMillis() > Date.now()) {
+            return { success: false, error: 'Période de pénalité en cours' };
+        }
         
-        // Mettre à jour les réponses et le score du joueur
+        const question = duelData.questions[duelData.currentQuestionIndex];
+        const isCorrect = answerIndex === question.correct;
+        
         const playerKey = `player${playerNumber}`;
-        const currentAnswers = duelData[playerKey].answers || [];
-        const currentScore = duelData[playerKey].score || 0;
-        
         const updateData = {};
-        updateData[`${playerKey}.answers`] = [...currentAnswers, answer];
-        updateData[`${playerKey}.score`] = currentScore + points;
+        
+        if (isCorrect) {
+            // Bonne réponse : incrémenter le compteur et passer au joueur suivant
+            updateData[`${playerKey}.correctAnswers`] = (duelData[playerKey].correctAnswers || 0) + 1;
+            updateData.activePlayer = playerNumber === 1 ? 2 : 1; // Changer de joueur
+            updateData.currentQuestionIndex = duelData.currentQuestionIndex + 1;
+            updateData.lastTimerUpdate = firebase.firestore.FieldValue.serverTimestamp();
+            updateData.penaltyUntil = null;
+        } else {
+            // Mauvaise réponse : pénalité de 3 secondes
+            updateData[`${playerKey}.wrongAnswers`] = (duelData[playerKey].wrongAnswers || 0) + 1;
+            updateData.penaltyUntil = firebase.firestore.Timestamp.fromDate(new Date(Date.now() + 3000)); // +3 secondes
+            updateData.currentQuestionIndex = duelData.currentQuestionIndex + 1; // Nouvelle question après pénalité
+        }
         
         await db.collection('duels').doc(duelId).update(updateData);
         
-        console.log('✅ Réponse soumise:', { isCorrect, points });
-        return { success: true, isCorrect, points };
+        console.log('✅ Réponse soumise:', { isCorrect });
+        return { success: true, isCorrect, correctAnswer: question.correct };
     } catch (error) {
         console.error('❌ Erreur soumission réponse:', error);
         return { success: false, error: error.message };
@@ -692,88 +710,160 @@ async function submitDuelAnswer(duelId, playerNumber, questionIndex, answerIndex
 }
 
 /**
- * Terminer un duel et mettre à jour les ELO
+ * Mettre à jour le temps restant d'un joueur
  */
-async function finishDuel(duelId) {
+async function updatePlayerTime(duelId, playerNumber, timeRemaining) {
     try {
+        const updateData = {};
+        updateData[`player${playerNumber}.timeRemaining`] = Math.max(0, timeRemaining);
+        updateData['lastTimerUpdate'] = firebase.firestore.FieldValue.serverTimestamp();
+        
+        await db.collection('duels').doc(duelId).update(updateData);
+        
+        // Note: La fin du duel est gérée par le timer dans duel.js
+        // pour éviter les appels multiples
+        
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour temps:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Terminer un duel et mettre à jour les ELO (nouveau système basé sur le temps)
+ */
+async function finishDuel(duelId, winner = null) {
+    try {
+        console.log('🏁 finishDuel() appelé - duelId:', duelId, 'winner:', winner);
+        
         const duelDoc = await db.collection('duels').doc(duelId).get();
         const duelData = duelDoc.data();
         
+        console.log('📊 Statut actuel du duel:', duelData.status);
+        
         if (duelData.status === 'finished') {
+            console.log('⚠️ Duel déjà terminé - protection contre double appel');
             return { success: true, message: 'Duel déjà terminé' };
         }
         
-        const player1Score = duelData.player1.score || 0;
-        const player2Score = duelData.player2.score || 0;
-        
-        let winner = null;
-        let isDraw = false;
-        
-        if (player1Score > player2Score) {
-            winner = 1;
-        } else if (player2Score > player1Score) {
-            winner = 2;
-        } else {
-            isDraw = true;
+        // Déterminer le vainqueur si non spécifié
+        if (winner === null) {
+            const player1Time = duelData.player1.timeRemaining || 0;
+            const player2Time = duelData.player2.timeRemaining || 0;
+            
+            if (player1Time > player2Time) {
+                winner = 1;
+            } else if (player2Time > player1Time) {
+                winner = 2;
+            } else {
+                winner = 0; // Égalité (très rare)
+            }
         }
         
-        // Calculer les changements d'ELO
+        const loser = winner === 1 ? 2 : 1;
+        const winnerTime = duelData[`player${winner}`].timeRemaining || 0;
+        
+        console.log('🏆 Vainqueur:', winner, '| Temps restant:', winnerTime, 's');
+        
+        // Calculer les changements d'ELO basés sur le temps restant
         const eloChanges = calculateEloChange(
-            duelData.player1.elo,
-            duelData.player2.elo,
-            isDraw
+            duelData[`player${winner}`].elo,
+            duelData[`player${loser}`].elo,
+            winnerTime
         );
+        
+        console.log('📈 Changements d\'ELO calculés:', eloChanges);
         
         // Mettre à jour les ELO et stats des joueurs
         const batch = db.batch();
         
         // Player 1
+        console.log('📝 Récupération des données du joueur 1:', duelData.player1.uid);
         const player1Ref = db.collection('users').doc(duelData.player1.uid);
         const player1Doc = await player1Ref.get();
+        
+        if (!player1Doc.exists) {
+            throw new Error('Joueur 1 introuvable dans la base de données');
+        }
+        
         const player1Data = player1Doc.data();
+        console.log('✅ Joueur 1 trouvé - ELO actuel:', player1Data.elo);
+        
+        const player1EloChange = winner === 1 ? eloChanges.winnerChange : eloChanges.loserChange;
+        const player1NewElo = (player1Data.elo || 1000) + player1EloChange;
+        
+        console.log('📊 Joueur 1 - Ancien ELO:', player1Data.elo, '| Changement:', player1EloChange, '| Nouveau ELO:', player1NewElo);
         
         batch.update(player1Ref, {
-            elo: (player1Data.elo || 1000) + eloChanges.winnerChange,
+            elo: player1NewElo,
             duelsPlayed: (player1Data.duelsPlayed || 0) + 1,
             duelsWon: (player1Data.duelsWon || 0) + (winner === 1 ? 1 : 0),
             duelsLost: (player1Data.duelsLost || 0) + (winner === 2 ? 1 : 0)
         });
         
         // Player 2
+        console.log('📝 Récupération des données du joueur 2:', duelData.player2.uid);
         const player2Ref = db.collection('users').doc(duelData.player2.uid);
         const player2Doc = await player2Ref.get();
+        
+        if (!player2Doc.exists) {
+            throw new Error('Joueur 2 introuvable dans la base de données');
+        }
+        
         const player2Data = player2Doc.data();
+        console.log('✅ Joueur 2 trouvé - ELO actuel:', player2Data.elo);
+        
+        const player2EloChange = winner === 2 ? eloChanges.winnerChange : eloChanges.loserChange;
+        const player2NewElo = (player2Data.elo || 1000) + player2EloChange;
+        
+        console.log('📊 Joueur 2 - Ancien ELO:', player2Data.elo, '| Changement:', player2EloChange, '| Nouveau ELO:', player2NewElo);
         
         batch.update(player2Ref, {
-            elo: (player2Data.elo || 1000) + eloChanges.loserChange,
+            elo: player2NewElo,
             duelsPlayed: (player2Data.duelsPlayed || 0) + 1,
             duelsWon: (player2Data.duelsWon || 0) + (winner === 2 ? 1 : 0),
             duelsLost: (player2Data.duelsLost || 0) + (winner === 1 ? 1 : 0)
         });
         
         // Mettre à jour le duel
+        console.log('📝 Mise à jour du statut du duel');
         const duelRef = db.collection('duels').doc(duelId);
         batch.update(duelRef, {
             status: 'finished',
             winner: winner,
-            isDraw: isDraw,
-            eloChanges: eloChanges,
+            eloChanges: {
+                player1: player1EloChange,
+                player2: player2EloChange
+            },
             finishedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         
+        console.log('💾 Commit du batch update...');
+        console.log('📦 Batch contient 3 opérations: 2 users + 1 duel');
         await batch.commit();
+        console.log('✅ Batch commit réussi !');
+        console.log('🎉 ELO mis à jour - Joueur 1:', player1NewElo, '| Joueur 2:', player2NewElo);
         
-        console.log('✅ Duel terminé:', { winner, isDraw, eloChanges });
+        console.log('✅ Duel terminé:', { 
+            winner, 
+            eloChanges: {
+                player1: player1EloChange,
+                player2: player2EloChange
+            }
+        });
+        
         return { 
             success: true, 
-            winner, 
-            isDraw, 
-            eloChanges,
-            player1Score,
-            player2Score
+            winner,
+            eloChanges: {
+                player1: player1EloChange,
+                player2: player2EloChange
+            }
         };
     } catch (error) {
         console.error('❌ Erreur fin duel:', error);
+        console.error('Stack trace:', error.stack);
         return { success: false, error: error.message };
     }
 }
@@ -890,6 +980,15 @@ window.deleteQuestion = deleteQuestion;
 window.migrateQuestionsToFirebase = migrateQuestionsToFirebase;
 window.saveGameResult = saveGameResult;
 window.getUserStats = getUserStats;
+
+// Fonctions de duel
+window.joinDuel = joinDuel;
+window.submitDuelAnswer = submitDuelAnswer;
+window.updatePlayerTime = updatePlayerTime;
+window.finishDuel = finishDuel;
+window.watchDuel = watchDuel;
+window.getLeaderboard = getLeaderboard;
+window.getPlayerRank = getPlayerRank;
 
 // Exposer aussi les services Firebase
 window.auth = auth;

@@ -2,8 +2,8 @@
 // CONFIGURATION & CONSTANTS
 // ===========================
 const CONFIG = {
-    totalQuestions: 3,
-    timePerQuestion: 30,
+    initialTime: 60, // 60 secondes par joueur
+    penaltyDuration: 3, // 3 secondes de pénalité
     maxCategorySelection: 5
 };
 
@@ -16,19 +16,16 @@ let categoryState = {
 };
 
 // ===========================
-// DUEL STATE
+// DUEL STATE (Nouveau système "12 Coups de Midi")
 // ===========================
 let duelState = {
     duelId: null,
     playerNumber: null, // 1 or 2
-    currentQuestion: 0,
-    timeRemaining: CONFIG.timePerQuestion,
     timerInterval: null,
-    answerSelected: false,
-    questionStartTime: null,
     duelUnsubscribe: null,
-    combo: 0, // Combo de bonnes réponses consécutives
-    maxCombo: 0 // Meilleur combo de la partie
+    isAnswering: false, // Pour éviter les doubles clics
+    penaltyTimeout: null, // Timeout pour la pénalité
+    lastTimerSync: Date.now() // Pour synchroniser le timer local
 };
 
 // ===========================
@@ -285,7 +282,7 @@ async function startMatchmaking() {
 }
 
 // ===========================
-// DUEL UPDATE HANDLER
+// DUEL UPDATE HANDLER (Nouveau système)
 // ===========================
 function handleDuelUpdate(snapshot) {
     if (!snapshot.exists) {
@@ -305,7 +302,7 @@ function handleDuelUpdate(snapshot) {
         }
     }
     
-    console.log('📊 Duel status:', duelData.status);
+    console.log('📊 Duel status:', duelData.status, '| Active player:', duelData.activePlayer);
     
     switch (duelData.status) {
         case 'waiting':
@@ -319,17 +316,45 @@ function handleDuelUpdate(snapshot) {
             
         case 'playing':
             // Le jeu commence
-            if (duelState.currentQuestion === 0) {
+            const gameContent = document.getElementById('gameContent');
+            
+            if (gameContent.classList.contains('hidden')) {
+                // Première fois : lancer le compte à rebours
                 startCountdown();
             } else {
+                // Mise à jour en cours de jeu
                 updateGameScreen(duelData);
             }
             break;
             
         case 'finished':
             // Duel terminé
+            stopTimer();
             showResults(duelData);
             break;
+    }
+}
+
+function updateGameScreen(duelData) {
+    // Mettre à jour les cartes des joueurs
+    updatePlayerCards(duelData);
+    
+    // Charger la nouvelle question si nécessaire
+    const currentQuestionElement = document.getElementById('questionNumber');
+    const currentQuestionNumber = parseInt(currentQuestionElement.textContent.match(/\d+/)?.[0] || 0);
+    
+    console.log(`📊 Question actuelle affichée: ${currentQuestionNumber}, Question serveur: ${duelData.currentQuestionIndex + 1}`);
+    
+    // Ne charger la nouvelle question que si on n'est pas en train de répondre
+    // Cela évite de charger la question suivante pendant que le feedback/pénalité est affiché
+    if (currentQuestionNumber !== duelData.currentQuestionIndex + 1 && !duelState.isAnswering) {
+        console.log('🔄 Chargement de la nouvelle question...');
+        loadQuestion(duelData);
+    }
+    
+    // Gérer le timer
+    if (!duelState.timerInterval && duelData.status === 'playing') {
+        startTimer(duelData);
     }
 }
 
@@ -406,62 +431,86 @@ function startCountdown() {
 }
 
 // ===========================
-// GAME LOGIC
+// GAME LOGIC (Nouveau système "12 Coups de Midi")
 // ===========================
-function startGame() {
+async function startGame() {
+    console.log('🎮 Démarrage du jeu...');
     document.getElementById('gameContent').classList.remove('hidden');
-    loadQuestion();
+    
+    // Cacher le timer global (on utilise les timers individuels sur les cartes)
+    const timerBox = document.getElementById('timerBox');
+    if (timerBox) {
+        timerBox.style.display = 'none';
+    }
+    
+    // Charger les données du duel et afficher la première question
+    try {
+        const duelDoc = await db.collection('duels').doc(duelState.duelId).get();
+        if (duelDoc.exists) {
+            const duelData = duelDoc.data();
+            console.log('📊 Données du duel chargées:', duelData);
+            
+            // Charger la première question
+            loadQuestion(duelData);
+            
+            // Mettre à jour les cartes des joueurs
+            updatePlayerCards(duelData);
+            
+            // Démarrer le timer
+            startTimer(duelData);
+        }
+    } catch (error) {
+        console.error('❌ Erreur démarrage du jeu:', error);
+    }
 }
 
-function loadQuestion() {
-    // Récupérer les données du duel depuis Firestore
-    db.collection('duels').doc(duelState.duelId).get().then(doc => {
-        const duelData = doc.data();
-        const question = duelData.questions[duelState.currentQuestion];
+function loadQuestion(duelData) {
+    const question = duelData.questions[duelData.currentQuestionIndex];
+    
+    if (!question) {
+        console.error('❌ Question introuvable');
+        return;
+    }
+    
+    console.log('📝 Chargement de la question:', duelData.currentQuestionIndex + 1);
+    
+    // Mettre à jour l'interface
+    document.getElementById('questionNumber').textContent = `Question ${duelData.currentQuestionIndex + 1}`;
+    document.getElementById('questionText').textContent = question.question;
+    document.getElementById('progressText').textContent = `Mode Duel - En cours`;
+    
+    // Catégorie
+    const categoryElement = document.getElementById('questionCategory');
+    const categoryIcon = CATEGORY_ICONS[question.category] || 'fa-question';
+    categoryElement.innerHTML = `
+        <i class="fas ${categoryIcon} category-icon"></i>
+        <span class="category-name">${question.category}</span>
+    `;
+    
+    // Réponses
+    const answersGrid = document.getElementById('answersGrid');
+    const answerButtons = answersGrid.querySelectorAll('.answer-btn');
+    
+    const isMyTurn = duelData.activePlayer === duelState.playerNumber;
+    
+    answerButtons.forEach((btn, index) => {
+        btn.classList.remove('correct', 'wrong', 'disabled', 'selected');
+        btn.querySelector('.answer-text').textContent = question.answers[index];
         
-        if (!question) {
-            console.error('❌ Question introuvable');
-            return;
+        if (isMyTurn) {
+            btn.disabled = false;
+            btn.onclick = () => selectAnswer(index);
+        } else {
+            btn.disabled = true;
+            btn.classList.add('disabled');
         }
-        
-        // Mettre à jour l'interface
-        updatePlayerCards(duelData);
-        
-        document.getElementById('questionNumber').textContent = `Question ${duelState.currentQuestion + 1}`;
-        document.getElementById('questionText').textContent = question.question;
-        document.getElementById('progressText').textContent = `Question ${duelState.currentQuestion + 1}/${CONFIG.totalQuestions}`;
-        
-        const progressBar = document.getElementById('progressBar');
-        progressBar.style.width = `${((duelState.currentQuestion + 1) / CONFIG.totalQuestions) * 100}%`;
-        
-        // Catégorie
-        const categoryElement = document.getElementById('questionCategory');
-        const categoryIcon = CATEGORY_ICONS[question.category] || 'fa-question';
-        categoryElement.innerHTML = `
-            <i class="fas ${categoryIcon} category-icon"></i>
-            <span class="category-name">${question.category}</span>
-        `;
-        
-        // Réponses
-        const answersGrid = document.getElementById('answersGrid');
-        const answerButtons = answersGrid.querySelectorAll('.answer-btn');
-        
-        answerButtons.forEach((btn, index) => {
-            btn.classList.remove('correct', 'wrong', 'disabled');
-            btn.querySelector('.answer-text').textContent = question.answers[index];
-            btn.onclick = () => selectAnswer(index, question.correct);
-        });
-        
-        // Réinitialiser le feedback
-        document.getElementById('answerFeedback').classList.remove('show', 'correct', 'wrong');
-        document.getElementById('btnNext').style.display = 'none';
-        
-        // Démarrer le timer
-        duelState.answerSelected = false;
-        duelState.timeRemaining = CONFIG.timePerQuestion;
-        duelState.questionStartTime = Date.now();
-        startTimer();
     });
+    
+    // Réinitialiser le feedback
+    document.getElementById('answerFeedback').classList.remove('show', 'correct', 'wrong');
+    document.getElementById('btnNext').style.display = 'none';
+    
+    duelState.isAnswering = false;
 }
 
 function updatePlayerCards(duelData) {
@@ -473,15 +522,19 @@ function updatePlayerCards(duelData) {
     document.getElementById('player1NameGame').textContent = duelData.player1.displayName;
     document.getElementById('player1EloGame').textContent = duelData.player1.elo;
     
+    // Afficher le temps restant au lieu du score
     const player1ScoreElement = document.getElementById('player1Score');
-    const oldScore1 = parseInt(player1ScoreElement.textContent) || 0;
-    const newScore1 = duelData.player1.score || 0;
+    const player1Time = Math.max(0, Math.floor(duelData.player1.timeRemaining || 0));
+    player1ScoreElement.textContent = `${player1Time}s`;
     
-    if (newScore1 > oldScore1) {
-        player1ScoreElement.classList.add('score-increase');
-        setTimeout(() => player1ScoreElement.classList.remove('score-increase'), 600);
+    // Changer la couleur selon le temps restant
+    if (player1Time <= 10) {
+        player1ScoreElement.style.color = 'var(--error)';
+    } else if (player1Time <= 30) {
+        player1ScoreElement.style.color = 'var(--warning)';
+    } else {
+        player1ScoreElement.style.color = 'var(--success)';
     }
-    player1ScoreElement.textContent = newScore1;
     
     // Player 2
     if (duelData.player2) {
@@ -490,89 +543,172 @@ function updatePlayerCards(duelData) {
         document.getElementById('player2EloGame').textContent = duelData.player2.elo;
         
         const player2ScoreElement = document.getElementById('player2Score');
-        const oldScore2 = parseInt(player2ScoreElement.textContent) || 0;
-        const newScore2 = duelData.player2.score || 0;
+        const player2Time = Math.max(0, Math.floor(duelData.player2.timeRemaining || 0));
+        player2ScoreElement.textContent = `${player2Time}s`;
         
-        if (newScore2 > oldScore2) {
-            player2ScoreElement.classList.add('score-increase');
-            setTimeout(() => player2ScoreElement.classList.remove('score-increase'), 600);
+        // Changer la couleur selon le temps restant
+        if (player2Time <= 10) {
+            player2ScoreElement.style.color = 'var(--error)';
+        } else if (player2Time <= 30) {
+            player2ScoreElement.style.color = 'var(--warning)';
+        } else {
+            player2ScoreElement.style.color = 'var(--success)';
         }
-        player2ScoreElement.textContent = newScore2;
     }
     
-    // Mettre en évidence le joueur actuel
+    // Mettre en évidence le joueur actif
+    player1Card.classList.remove('current-player', 'active-turn');
+    document.getElementById('player2Card').classList.remove('current-player', 'active-turn');
+    
+    if (duelData.activePlayer === 1) {
+        player1Card.classList.add('active-turn');
+    } else if (duelData.activePlayer === 2) {
+        document.getElementById('player2Card').classList.add('active-turn');
+    }
+    
+    // Toujours mettre en évidence le joueur local
     if (isPlayer1) {
         player1Card.classList.add('current-player');
     } else {
         document.getElementById('player2Card').classList.add('current-player');
     }
-    
-    // Afficher le combo si > 1
-    updateComboDisplay();
 }
 
-function startTimer() {
-    const timerValue = document.getElementById('timerValue');
-    const timerBox = document.getElementById('timerBox');
-    
+// Nouveau système de timer : met à jour le temps du joueur actif
+function startTimer(initialDuelData) {
     if (duelState.timerInterval) {
         clearInterval(duelState.timerInterval);
     }
     
-    // Réinitialiser le style du timer
-    timerBox.classList.remove('warning', 'danger');
-    timerBox.style.animation = '';
+    console.log('⏱️ Démarrage du timer');
     
-    duelState.timerInterval = setInterval(() => {
-        duelState.timeRemaining--;
-        timerValue.textContent = duelState.timeRemaining;
-        
-        // Avertissement à 10 secondes
-        if (duelState.timeRemaining === 10) {
-            timerBox.classList.add('warning');
-        }
-        
-        // Danger à 5 secondes
-        if (duelState.timeRemaining === 5) {
-            timerBox.classList.remove('warning');
-            timerBox.classList.add('danger');
-            timerBox.style.animation = 'pulse 0.5s ease-in-out infinite';
-        }
-        
-        if (duelState.timeRemaining <= 0) {
-            clearInterval(duelState.timerInterval);
-            if (!duelState.answerSelected) {
-                selectAnswer(-1, -1); // Temps écoulé, pas de réponse
+    // Variables locales pour le timer
+    let localTime = {
+        player1: initialDuelData.player1.timeRemaining || 60,
+        player2: initialDuelData.player2.timeRemaining || 60
+    };
+    let currentActivePlayer = initialDuelData.activePlayer;
+    let syncCounter = 0;
+    
+    duelState.timerInterval = setInterval(async () => {
+        try {
+            // Récupérer les données actuelles pour vérifier le joueur actif
+            const duelDoc = await db.collection('duels').doc(duelState.duelId).get();
+            if (!duelDoc.exists) {
+                clearInterval(duelState.timerInterval);
+                return;
             }
+            
+            const currentDuelData = duelDoc.data();
+            
+            // Vérifier si le duel est toujours en cours
+            if (currentDuelData.status !== 'playing') {
+                clearInterval(duelState.timerInterval);
+                return;
+            }
+            
+            // Mettre à jour le joueur actif si changé
+            if (currentDuelData.activePlayer !== currentActivePlayer) {
+                console.log(`🔄 Changement de joueur actif: ${currentActivePlayer} → ${currentDuelData.activePlayer}`);
+                currentActivePlayer = currentDuelData.activePlayer;
+                
+                // Synchroniser les temps avec le serveur
+                localTime.player1 = currentDuelData.player1.timeRemaining || 0;
+                localTime.player2 = currentDuelData.player2.timeRemaining || 0;
+            }
+            
+            // Décrémenter le temps du joueur actif localement
+            const playerKey = `player${currentActivePlayer}`;
+            
+            if (localTime[playerKey] > 0) {
+                localTime[playerKey]--;
+            }
+            
+            // Mettre à jour l'affichage local immédiatement
+            const player1ScoreElement = document.getElementById('player1Score');
+            const player2ScoreElement = document.getElementById('player2Score');
+            
+            if (player1ScoreElement) {
+                player1ScoreElement.textContent = `${Math.max(0, Math.floor(localTime.player1))}s`;
+                // Changer la couleur selon le temps restant
+                if (localTime.player1 <= 10) {
+                    player1ScoreElement.style.color = 'var(--error)';
+                } else if (localTime.player1 <= 30) {
+                    player1ScoreElement.style.color = 'var(--warning)';
+                } else {
+                    player1ScoreElement.style.color = 'var(--success)';
+                }
+            }
+            
+            if (player2ScoreElement) {
+                player2ScoreElement.textContent = `${Math.max(0, Math.floor(localTime.player2))}s`;
+                // Changer la couleur selon le temps restant
+                if (localTime.player2 <= 10) {
+                    player2ScoreElement.style.color = 'var(--error)';
+                } else if (localTime.player2 <= 30) {
+                    player2ScoreElement.style.color = 'var(--warning)';
+                } else {
+                    player2ScoreElement.style.color = 'var(--success)';
+                }
+            }
+            
+            syncCounter++;
+            
+            // Synchroniser avec Firestore toutes les 3 secondes (au lieu de chaque seconde)
+            if (syncCounter >= 3) {
+                syncCounter = 0;
+                
+                // Vérifier si le joueur actif est le joueur local
+                const user = getCurrentUser();
+                const isPlayer1 = currentDuelData.player1.uid === user.uid;
+                const isMyTurn = (currentActivePlayer === 1 && isPlayer1) || (currentActivePlayer === 2 && !isPlayer1);
+                
+                // Seul le joueur actif met à jour le timer sur Firestore
+                if (isMyTurn) {
+                    await updatePlayerTime(duelState.duelId, currentActivePlayer, localTime[playerKey]);
+                    console.log(`⏱️ Sync timer: Player ${currentActivePlayer} = ${localTime[playerKey]}s`);
+                }
+            }
+            
+            // Vérifier si le temps est écoulé pour l'un des joueurs
+            if (localTime['player1'] <= 0) {
+                console.log('⏱️ Temps écoulé pour le joueur 1 - Joueur 2 gagne !');
+                clearInterval(duelState.timerInterval);
+                duelState.timerInterval = null;
+                
+                // N'importe quel joueur peut terminer le duel (protection contre double appel dans finishDuel)
+                console.log('🏁 Fin du duel - Victoire du joueur 2');
+                await finishDuel(duelState.duelId, 2);
+                return;
+            }
+            
+            if (localTime['player2'] <= 0) {
+                console.log('⏱️ Temps écoulé pour le joueur 2 - Joueur 1 gagne !');
+                clearInterval(duelState.timerInterval);
+                duelState.timerInterval = null;
+                
+                // N'importe quel joueur peut terminer le duel (protection contre double appel dans finishDuel)
+                console.log('🏁 Fin du duel - Victoire du joueur 1');
+                await finishDuel(duelState.duelId, 1);
+                return;
+            }
+            
+        } catch (error) {
+            console.error('❌ Erreur timer:', error);
         }
     }, 1000);
 }
 
-// Fonction pour afficher le combo
-function updateComboDisplay() {
-    const user = getCurrentUser();
-    const playerCard = duelState.playerNumber === 1 
-        ? document.getElementById('player1Card') 
-        : document.getElementById('player2Card');
-    
-    // Supprimer l'ancien indicateur de combo
-    const oldCombo = playerCard.querySelector('.combo-indicator');
-    if (oldCombo) {
-        oldCombo.remove();
-    }
-    
-    // Afficher le nouveau combo si > 1
-    if (duelState.combo > 1) {
-        const comboIndicator = document.createElement('div');
-        comboIndicator.className = 'combo-indicator';
-        comboIndicator.innerHTML = `🔥 x${duelState.combo}`;
-        playerCard.appendChild(comboIndicator);
+function stopTimer() {
+    if (duelState.timerInterval) {
+        clearInterval(duelState.timerInterval);
+        duelState.timerInterval = null;
     }
 }
 
 // Fonction pour afficher un effet visuel sur la carte du joueur
-function showPlayerCardEffect(isCorrect) {
-    const playerCard = duelState.playerNumber === 1 
+function showPlayerCardEffect(playerNumber, isCorrect) {
+    const playerCard = playerNumber === 1 
         ? document.getElementById('player1Card') 
         : document.getElementById('player2Card');
     
@@ -595,52 +731,53 @@ function showPlayerCardEffect(isCorrect) {
     }, 600);
 }
 
-async function selectAnswer(selectedIndex, correctIndex) {
-    if (duelState.answerSelected) return;
+async function selectAnswer(selectedIndex) {
+    if (duelState.isAnswering) return;
     
-    duelState.answerSelected = true;
-    clearInterval(duelState.timerInterval);
+    duelState.isAnswering = true;
     
-    const timeSpent = (Date.now() - duelState.questionStartTime) / 1000;
+    console.log('📤 Soumission de la réponse:', selectedIndex);
+    
+    // Désactiver tous les boutons immédiatement
+    const answersGrid = document.getElementById('answersGrid');
+    const answerButtons = answersGrid.querySelectorAll('.answer-btn');
+    answerButtons.forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+    });
+    
+    // Marquer visuellement la réponse sélectionnée
+    answerButtons[selectedIndex].classList.add('selected');
     
     // Soumettre la réponse
     const result = await submitDuelAnswer(
         duelState.duelId,
         duelState.playerNumber,
-        duelState.currentQuestion,
-        selectedIndex,
-        timeSpent
+        selectedIndex
     );
     
-    // Mettre à jour le combo
-    if (result.isCorrect) {
-        duelState.combo++;
-        if (duelState.combo > duelState.maxCombo) {
-            duelState.maxCombo = duelState.combo;
-        }
-    } else {
-        duelState.combo = 0;
+    if (!result.success) {
+        console.error('❌ Erreur soumission:', result.error);
+        duelState.isAnswering = false;
+        return;
     }
     
+    // Récupérer la question actuelle pour afficher la bonne réponse
+    const doc = await db.collection('duels').doc(duelState.duelId).get();
+    const duelData = doc.data();
+    const question = duelData.questions[duelData.currentQuestionIndex - 1]; // -1 car l'index a déjà été incrémenté
+    
     // Afficher l'effet sur la carte du joueur
-    showPlayerCardEffect(result.isCorrect);
+    showPlayerCardEffect(duelState.playerNumber, result.isCorrect);
     
     // Afficher le feedback visuel sur les boutons
-    const answersGrid = document.getElementById('answersGrid');
-    const answerButtons = answersGrid.querySelectorAll('.answer-btn');
-    
     answerButtons.forEach((btn, index) => {
-        btn.classList.add('disabled');
-        if (index === correctIndex) {
+        if (index === result.correctAnswer) {
             btn.classList.add('correct');
-        } else if (index === selectedIndex && selectedIndex !== -1) {
+        } else if (index === selectedIndex) {
             btn.classList.add('wrong');
         }
     });
-    
-    // Récupérer l'explication
-    const doc = await db.collection('duels').doc(duelState.duelId).get();
-    const question = doc.data().questions[duelState.currentQuestion];
     
     // Afficher le feedback textuel
     const feedback = document.getElementById('answerFeedback');
@@ -651,47 +788,76 @@ async function selectAnswer(selectedIndex, correctIndex) {
     if (result.isCorrect) {
         feedback.classList.add('show', 'correct');
         feedbackIcon.className = 'fas fa-check feedback-icon correct';
-        
-        let message = `Bonne réponse ! +${result.points} points`;
-        if (duelState.combo > 1) {
-            message += ` 🔥 Combo x${duelState.combo} !`;
-        }
-        feedbackText.textContent = message;
+        feedbackText.textContent = '✅ Bonne réponse !';
         feedbackText.className = 'feedback-text correct';
         
         // Lancer les confettis !
         createConfetti();
+        
+        // Passer à la question suivante après 2 secondes
+        setTimeout(async () => {
+            feedback.classList.remove('show', 'correct');
+            
+            // Charger la nouvelle question après le feedback
+            const doc = await db.collection('duels').doc(duelState.duelId).get();
+            const updatedDuelData = doc.data();
+            loadQuestion(updatedDuelData);
+            
+            // Réinitialiser l'état de réponse
+            duelState.isAnswering = false;
+        }, 2000);
     } else {
         feedback.classList.add('show', 'wrong');
         feedbackIcon.className = 'fas fa-times feedback-icon wrong';
-        
-        if (selectedIndex === -1) {
-            feedbackText.textContent = '⏱️ Temps écoulé !';
-        } else {
-            feedbackText.textContent = '❌ Mauvaise réponse !';
-        }
+        feedbackText.textContent = '❌ Mauvaise réponse !';
         feedbackText.className = 'feedback-text wrong';
+        
+        // Afficher la bonne réponse
+        if (question && question.explanation) {
+            feedbackExplanation.textContent = `Bonne réponse : ${question.answers[result.correctAnswer]}. ${question.explanation}`;
+        } else if (question) {
+            feedbackExplanation.textContent = `Bonne réponse : ${question.answers[result.correctAnswer]}`;
+        }
+        
+        // Afficher la pénalité de 3 secondes
+        showPenaltyCountdown();
     }
-    
-    if (question.explanation) {
-        feedbackExplanation.textContent = question.explanation;
-    }
-    
-    // Afficher le bouton suivant
-    const btnNext = document.getElementById('btnNext');
-    btnNext.style.display = 'flex';
-    btnNext.onclick = nextQuestion;
 }
 
-async function nextQuestion() {
-    duelState.currentQuestion++;
+// Afficher le compte à rebours de pénalité (3 secondes)
+async function showPenaltyCountdown() {
+    let penaltyTime = CONFIG.penaltyDuration;
     
-    if (duelState.currentQuestion >= CONFIG.totalQuestions) {
-        // Fin du duel
-        await finishDuel(duelState.duelId);
-    } else {
-        loadQuestion();
-    }
+    // Masquer le feedback normal
+    const feedback = document.getElementById('answerFeedback');
+    feedback.classList.remove('show', 'wrong');
+    
+    // Afficher l'overlay de pénalité
+    const penaltyOverlay = document.getElementById('penaltyOverlay');
+    const penaltyCountdown = document.getElementById('penaltyCountdown');
+    
+    penaltyOverlay.classList.remove('hidden');
+    penaltyCountdown.textContent = penaltyTime;
+    
+    const penaltyInterval = setInterval(async () => {
+        penaltyTime--;
+        
+        if (penaltyTime > 0) {
+            penaltyCountdown.textContent = penaltyTime;
+        } else {
+            clearInterval(penaltyInterval);
+            penaltyOverlay.classList.add('hidden');
+            document.getElementById('feedbackExplanation').textContent = '';
+            
+            // Charger la nouvelle question après la pénalité
+            const doc = await db.collection('duels').doc(duelState.duelId).get();
+            const updatedDuelData = doc.data();
+            loadQuestion(updatedDuelData);
+            
+            // Réinitialiser l'état de réponse
+            duelState.isAnswering = false;
+        }
+    }, 1000);
 }
 
 // Fonction pour créer des confettis lors d'une bonne réponse
@@ -738,17 +904,20 @@ function createConfetti() {
     }
 }
 
-function updateGameScreen(duelData) {
-    updatePlayerCards(duelData);
-}
-
 // ===========================
-// RESULTS
+// RESULTS (Nouveau système basé sur le temps)
 // ===========================
 function showResults(duelData) {
+    console.log('🏁 Affichage des résultats...', duelData);
+    
+    // Nettoyer le timer
     if (duelState.timerInterval) {
         clearInterval(duelState.timerInterval);
+        duelState.timerInterval = null;
     }
+    
+    // Réinitialiser l'état du duel
+    duelState.isAnswering = false;
     
     document.getElementById('gameContent').classList.add('hidden');
     const resultsScreen = document.getElementById('resultsScreen');
@@ -758,6 +927,7 @@ function showResults(duelData) {
     const isPlayer1 = duelData.player1.uid === user.uid;
     const currentPlayer = isPlayer1 ? duelData.player1 : duelData.player2;
     const opponent = isPlayer1 ? duelData.player2 : duelData.player1;
+    const currentPlayerNumber = isPlayer1 ? 1 : 2;
     
     // Déterminer le résultat
     const resultTitle = document.getElementById('resultTitle');
@@ -765,22 +935,23 @@ function showResults(duelData) {
     const player1Result = document.getElementById('player1Result');
     const player2Result = document.getElementById('player2Result');
     
-    let eloChange = 0;
-    if (isPlayer1) {
-        eloChange = duelData.eloChanges.winnerChange;
-    } else {
-        eloChange = duelData.eloChanges.loserChange;
-    }
+    // Récupérer le changement d'ELO
+    const eloChange = duelData.eloChanges[`player${currentPlayerNumber}`] || 0;
+    const opponentEloChange = duelData.eloChanges[`player${currentPlayerNumber === 1 ? 2 : 1}`] || 0;
     
-    if (duelData.isDraw) {
-        resultTitle.textContent = 'Match nul !';
-        resultTitle.className = 'result-title draw';
-    } else if ((duelData.winner === 1 && isPlayer1) || (duelData.winner === 2 && !isPlayer1)) {
-        resultTitle.textContent = 'Victoire !';
+    // Déterminer le vainqueur
+    const isWinner = duelData.winner === currentPlayerNumber;
+    
+    if (isWinner) {
+        resultTitle.textContent = '🎉 Victoire !';
         resultTitle.className = 'result-title victory';
         player1Result.classList.add('winner');
+        
+        // Lancer des confettis pour la victoire
+        createConfetti();
+        setTimeout(createConfetti, 500);
     } else {
-        resultTitle.textContent = 'Défaite';
+        resultTitle.textContent = '😔 Défaite';
         resultTitle.className = 'result-title defeat';
         player2Result.classList.add('winner');
     }
@@ -792,16 +963,16 @@ function showResults(duelData) {
     `;
     eloChangeElement.className = `elo-change ${eloChange >= 0 ? 'positive' : 'negative'}`;
     
-    // Afficher les stats des joueurs
+    // Afficher les stats des joueurs (temps restant au lieu du score)
     document.getElementById('player1NameResult').textContent = currentPlayer.displayName;
-    document.getElementById('player1FinalScore').textContent = currentPlayer.score;
-    document.getElementById('player1Correct').textContent = currentPlayer.answers.filter(a => a.isCorrect).length;
+    document.getElementById('player1FinalScore').textContent = `${Math.floor(currentPlayer.timeRemaining || 0)}s`;
+    document.getElementById('player1Correct').textContent = currentPlayer.correctAnswers || 0;
     document.getElementById('player1NewElo').textContent = currentPlayer.elo + eloChange;
     
     document.getElementById('player2NameResult').textContent = opponent.displayName;
-    document.getElementById('player2FinalScore').textContent = opponent.score;
-    document.getElementById('player2Correct').textContent = opponent.answers.filter(a => a.isCorrect).length;
-    document.getElementById('player2NewElo').textContent = opponent.elo + (isPlayer1 ? duelData.eloChanges.loserChange : duelData.eloChanges.winnerChange);
+    document.getElementById('player2FinalScore').textContent = `${Math.floor(opponent.timeRemaining || 0)}s`;
+    document.getElementById('player2Correct').textContent = opponent.correctAnswers || 0;
+    document.getElementById('player2NewElo').textContent = opponent.elo + opponentEloChange;
     
     // Boutons
     document.getElementById('btnViewLeaderboard').onclick = () => {
@@ -815,4 +986,12 @@ function showResults(duelData) {
     document.getElementById('btnHome').onclick = () => {
         window.location.href = 'index.html';
     };
+    
+    // Nettoyer le listener Firestore APRÈS avoir affiché les résultats
+    // Cela permet aux deux joueurs de recevoir la mise à jour du statut 'finished'
+    if (duelState.duelUnsubscribe) {
+        console.log('🧹 Nettoyage du listener Firestore (après affichage des résultats)');
+        duelState.duelUnsubscribe();
+        duelState.duelUnsubscribe = null;
+    }
 }
