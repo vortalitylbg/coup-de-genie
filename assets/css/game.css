@@ -984,6 +984,69 @@
 }
 
 /* ===========================
+   ADS SECTION - Publicités Google AdSense
+   =========================== */
+.ads-section {
+    margin-top: 2.5rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(59, 130, 246, 0.08));
+    border: 2px solid var(--border-color);
+    border-radius: 1.5rem;
+    backdrop-filter: blur(10px);
+    animation: fadeInUp 0.6s ease;
+}
+
+.ads-message {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    background: var(--bg-glass);
+    border-left: 4px solid var(--primary-purple);
+    border-radius: 0.75rem;
+    transition: all var(--transition-normal);
+}
+
+.ads-message:hover {
+    background: rgba(124, 58, 237, 0.15);
+    transform: translateX(4px);
+}
+
+.ads-message i {
+    font-size: 1.5rem;
+    color: var(--primary-purple);
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+.ads-message p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.ads-message strong {
+    color: var(--text-primary);
+}
+
+.ads-container {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    background: var(--bg-darker);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-color);
+    min-height: 200px;
+    align-items: center;
+}
+
+.adsbygoogle {
+    max-width: 100%;
+}
+
+/* ===========================
    RESPONSIVE - GAME PAGE
    =========================== */
 @media (max-width: 768px) {
@@ -1127,5 +1190,19 @@
     
     .category-modal-footer .btn {
         width: 100%;
+    }
+    
+    /* Ads section responsive */
+    .ads-section {
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .ads-message {
+        padding: 1rem;
+    }
+    
+    .ads-message p {
+        font-size: 0.9rem;
     }
 }
