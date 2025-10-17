@@ -11,6 +11,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6310403411998518"
+         crossorigin="anonymous"></script>
     <style>
         .leaderboard-container {
             max-width: 1200px;
@@ -189,6 +192,39 @@
             margin-bottom: 2rem;
         }
 
+        /* Annonce AdSense */
+        .adsense-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(59, 130, 246, 0.05));
+            border: 1px solid var(--border-color);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(10px);
+            max-width: fit-content;
+        }
+
+        .adsense-message {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 400px;
+        }
+
+        .adsense-message i {
+            color: var(--primary-purple);
+            margin-right: 0.5rem;
+        }
+
+        .adsense-container {
+            display: flex;
+            justify-content: center;
+        }
+
         @media (max-width: 768px) {
             .leaderboard-row {
                 grid-template-columns: 60px 1fr 100px;
@@ -210,6 +246,15 @@
 
             .player-rank-info {
                 flex-direction: column;
+            }
+
+            .adsense-section {
+                margin: 2rem auto;
+                padding: 1.5rem;
+            }
+
+            .adsense-message {
+                font-size: 0.85rem;
             }
         }
     </style>
@@ -276,6 +321,26 @@
             <!-- Loading -->
             <div class="loading-spinner" id="loadingSpinner">
                 <div class="spinner"></div>
+            </div>
+
+            <!-- Section Annonce -->
+            <div class="adsense-section">
+                <div class="adsense-message">
+                    <i class="fas fa-lightbulb"></i>
+                    Coup de génie est un projet passionnel gratuit. Pour maintenir le service de qualité, nous affichons des annonces discrètes. Merci de votre compréhension !
+                </div>
+                <div class="adsense-container">
+                    <!-- Google AdSense Ad - Display (300x250) -->
+                    <ins class="adsbygoogle"
+                         style="display:inline-block;width:300px;height:250px"
+                         data-ad-client="ca-pub-6310403411998518"
+                         data-ad-slot="9410413781"
+                         data-ad-format="auto"
+                         data-full-width-responsive="false"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
+                </div>
             </div>
 
             <!-- Tableau de classement -->

@@ -990,10 +990,142 @@ window.watchDuel = watchDuel;
 window.getLeaderboard = getLeaderboard;
 window.getPlayerRank = getPlayerRank;
 
+// ===========================
+// USER PROFILE MANAGEMENT
+// ===========================
+
+/**
+ * Récupérer toutes les données du profil utilisateur
+ */
+async function getUserData(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        
+        if (!userDoc.exists) {
+            throw new Error('Utilisateur non trouvé');
+        }
+        
+        const userData = userDoc.data();
+        const stats = await getUserStats(userId);
+        
+        return {
+            success: true,
+            user: {
+                uid: userId,
+                email: userData.email || '',
+                displayName: userData.displayName || '',
+                elo: userData.elo || 1000,
+                createdAt: userData.createdAt,
+                ...stats.stats
+            }
+        };
+    } catch (error) {
+        console.error('❌ Erreur récupération données utilisateur:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour le nom d'affichage (pseudo)
+ */
+async function updateUserDisplayName(newDisplayName) {
+    try {
+        const user = getCurrentUser();
+        if (!user) {
+            throw new Error('Vous devez être connecté');
+        }
+        
+        // Mettre à jour dans Auth
+        await user.updateProfile({
+            displayName: newDisplayName
+        });
+        
+        // Mettre à jour dans Firestore
+        await db.collection('users').doc(user.uid).update({
+            displayName: newDisplayName
+        });
+        
+        console.log('✅ Pseudo mis à jour:', newDisplayName);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour pseudo:', error);
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
+/**
+ * Mettre à jour le mot de passe
+ */
+async function updateUserPassword(currentPassword, newPassword) {
+    try {
+        const user = getCurrentUser();
+        if (!user || !user.email) {
+            throw new Error('Vous devez être connecté');
+        }
+        
+        // Ré-authentifier l'utilisateur
+        const credential = firebase.auth.EmailAuthProvider.credential(
+            user.email,
+            currentPassword
+        );
+        
+        await user.reauthenticateWithCredential(credential);
+        
+        // Mettre à jour le mot de passe
+        await user.updatePassword(newPassword);
+        
+        console.log('✅ Mot de passe mis à jour');
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour mot de passe:', error);
+        
+        if (error.code === 'auth/wrong-password') {
+            return { success: false, error: 'Le mot de passe actuel est incorrect' };
+        } else if (error.code === 'auth/weak-password') {
+            return { success: false, error: 'Le nouveau mot de passe est trop faible (min. 6 caractères)' };
+        }
+        
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
+/**
+ * Supprimer le compte utilisateur
+ */
+async function deleteUserAccount() {
+    try {
+        const user = getCurrentUser();
+        if (!user) {
+            throw new Error('Vous devez être connecté');
+        }
+        
+        // Supprimer les données utilisateur de Firestore
+        await db.collection('users').doc(user.uid).delete();
+        
+        // Supprimer le compte Firebase
+        await user.delete();
+        
+        console.log('✅ Compte supprimé');
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur suppression compte:', error);
+        
+        if (error.code === 'auth/requires-recent-login') {
+            return { success: false, error: 'Veuillez vous reconnecter pour supprimer votre compte' };
+        }
+        
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
 // Exposer aussi les services Firebase
 window.auth = auth;
 window.db = db;
 window.analytics = analytics;
+window.getUserData = getUserData;
+window.updateUserDisplayName = updateUserDisplayName;
+window.updateUserPassword = updateUserPassword;
+window.deleteUserAccount = deleteUserAccount;
 
 console.log('🔥 Firebase initialisé avec succès');
 

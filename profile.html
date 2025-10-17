@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - Coup de génie</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===========================
+           PROFILE PAGE STYLES
+           =========================== */
+
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .profile-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-purple), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .profile-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Sections principales */
+        .profile-section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+            transition: all var(--transition-normal);
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .profile-section:hover {
+            border-color: var(--primary-purple);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-purple);
+            font-size: 1.7rem;
+        }
+
+        /* Info utilisateur */
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-item {
+            background: rgba(124, 58, 237, 0.05);
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            word-break: break-all;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1));
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all var(--transition-normal);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary-purple);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(59, 130, 246, 0.15));
+        }
+
+        .stat-card-icon {
+            font-size: 1.8rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .stat-card-value {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Formulaires */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-navy);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all var(--transition-normal);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-submit {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        /* Messages */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            animation: slideInDown 0.3s ease;
+        }
+
+        .alert i {
+            font-size: 1.2rem;
+            margin-top: 0.2rem;
+            flex-shrink: 0;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: var(--success-light);
+        }
+
+        .alert-success i {
+            color: var(--success);
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: var(--error-light);
+        }
+
+        .alert-error i {
+            color: var(--error);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: var(--primary-blue-light);
+        }
+
+        .alert-info i {
+            color: var(--primary-blue);
+        }
+
+        /* Divider */
+        .form-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 2rem 0;
+        }
+
+        /* Zone de danger */
+        .danger-zone {
+            background: rgba(239, 68, 68, 0.05);
+            border: 2px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .danger-zone .section-title i {
+            color: var(--error);
+        }
+
+        .btn-danger {
+            background: var(--error);
+        }
+
+        .btn-danger:hover {
+            background: var(--error-light);
+        }
+
+        /* Loading state */
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .btn {
+            position: relative;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            right: 20px;
+            margin-top: -8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Back button */
+        .back-button {
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        /* Mobile responsif */
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 1rem;
+            }
+
+            .profile-title {
+                font-size: 2rem;
+            }
+
+            .user-info-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .form-actions {
+                flex-direction: column;
+            }
+
+            .btn-submit {
+                width: 100%;
+            }
+
+            .profile-section {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="profile-container">
+            <!-- Back button -->
+            <div class="back-button">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left btn-icon"></i>
+                    <span class="btn-text">Retour</span>
+                </a>
+            </div>
+
+            <!-- Header -->
+            <div class="profile-header">
+                <h1 class="profile-title">
+                    <i class="fas fa-user-circle"></i>
+                    Mon Profil
+                </h1>
+                <p class="profile-subtitle">Gérez vos informations personnelles et vos paramètres</p>
+            </div>
+
+            <!-- Messages d'alerte -->
+            <div id="alertContainer"></div>
+
+            <!-- Section Informations -->
+            <div class="profile-section">
+                <div class="section-title">
+                    <i class="fas fa-id-card"></i>
+                    Informations personnelles
+                </div>
+
+                <div class="user-info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Pseudo</div>
+                        <div class="info-value" id="displayNameDisplay">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value" id="emailDisplay">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Membre depuis</div>
+                        <div class="info-value" id="memberSinceDisplay">-</div>
+                    </div>
+                </div>
+
+                <form id="updateProfileForm">
+                    <div class="form-group">
+                        <label class="form-label" for="newDisplayName">
+                            <i class="fas fa-user"></i> Nouveau pseudo
+                        </label>
+                        <input type="text" id="newDisplayName" class="form-input" placeholder="Entrez votre nouveau pseudo" minlength="3" maxlength="30">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-submit" id="updateProfileBtn">
+                            <i class="fas fa-save btn-icon"></i>
+                            <span class="btn-text">Mettre à jour le pseudo</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Section Statistiques -->
+            <div class="profile-section">
+                <div class="section-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Vos statistiques
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-gamepad stat-card-icon" style="color: var(--primary-purple);"></i>
+                        <div class="stat-card-value" id="gamesPlayedStat">0</div>
+                        <div class="stat-card-label">Parties jouées</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-star stat-card-icon" style="color: var(--accent-gold);"></i>
+                        <div class="stat-card-value" id="bestScoreStat">0</div>
+                        <div class="stat-card-label">Meilleur score</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-average stat-card-icon" style="color: var(--primary-blue);"></i>
+                        <div class="stat-card-value" id="averageScoreStat">0</div>
+                        <div class="stat-card-label">Score moyen</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-trophy stat-card-icon" style="color: var(--accent-gold);"></i>
+                        <div class="stat-card-value" id="eloStat">1000</div>
+                        <div class="stat-card-label">Classement ELO</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-swords stat-card-icon" style="color: var(--error);"></i>
+                        <div class="stat-card-value" id="duelsPlayedStat">0</div>
+                        <div class="stat-card-label">Duels joués</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-crown stat-card-icon" style="color: var(--success);"></i>
+                        <div class="stat-card-value" id="duelsWonStat">0</div>
+                        <div class="stat-card-label">Duels gagnés</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Sécurité -->
+            <div class="profile-section">
+                <div class="section-title">
+                    <i class="fas fa-lock"></i>
+                    Sécurité & Mot de passe
+                </div>
+
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    <i class="fas fa-info-circle"></i> Pour votre sécurité, nous vous recommandons de changer régulièrement votre mot de passe.
+                </p>
+
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label class="form-label" for="currentPassword">
+                            <i class="fas fa-key"></i> Mot de passe actuel
+                        </label>
+                        <input type="password" id="currentPassword" class="form-input" placeholder="••••••••" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="newPassword">
+                            <i class="fas fa-lock"></i> Nouveau mot de passe
+                        </label>
+                        <input type="password" id="newPassword" class="form-input" placeholder="••••••••" minlength="6" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">
+                            <i class="fas fa-lock"></i> Confirmer le nouveau mot de passe
+                        </label>
+                        <input type="password" id="confirmPassword" class="form-input" placeholder="••••••••" minlength="6" required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-submit" id="changePasswordBtn">
+                            <i class="fas fa-key btn-icon"></i>
+                            <span class="btn-text">Changer le mot de passe</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Zone de danger -->
+            <div class="profile-section danger-zone">
+                <div class="section-title">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Zone de danger
+                </div>
+
+                <p style="color: var(--error-light); margin-bottom: 1.5rem; font-size: 0.95rem;">
+                    <i class="fas fa-warning"></i> Ces actions sont irréversibles. Soyez prudent !
+                </p>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                    <button type="button" class="btn btn-secondary" id="logoutBtn" style="flex: 1; min-width: 150px;">
+                        <i class="fas fa-sign-out-alt btn-icon"></i>
+                        <span class="btn-text">Déconnexion</span>
+                    </button>
+                    <button type="button" class="btn btn-danger" id="deleteAccountBtn" style="flex: 1; min-width: 150px;">
+                        <i class="fas fa-trash btn-icon"></i>
+                        <span class="btn-text">Supprimer le compte</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Particules d'animation en arrière-plan -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+
+    <!-- Scripts -->
+    <script src="js/firebase.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
