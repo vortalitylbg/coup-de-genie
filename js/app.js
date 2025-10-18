@@ -60,6 +60,88 @@ function createParticle(container) {
 }
 
 // ===========================
+// HOME PAGE STATS LOADER
+// ===========================
+
+/**
+ * Formater les grands nombres de manière lisible
+ */
+function formatStatNumber(num) {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+}
+
+/**
+ * Charger et afficher les statistiques de la page d'accueil
+ */
+async function loadHomePageStats() {
+    try {
+        // Vérifier que getHomePageStats existe (Firebase doit être chargé)
+        if (typeof getHomePageStats !== 'function') {
+            console.warn('⚠️ getHomePageStats pas encore disponible');
+            return;
+        }
+        
+        const stats = await getHomePageStats();
+        
+        if (!stats.success) {
+            console.warn('⚠️ Impossible de charger les stats');
+            return;
+        }
+        
+        // Récupérer les éléments des stats
+        const statItems = document.querySelectorAll('.stat-item');
+        
+        if (statItems.length >= 3) {
+            // Mettre à jour le premier bloc: Joueurs total
+            const firstStatNumber = statItems[0].querySelector('.stat-number');
+            const firstStatLabel = statItems[0].querySelector('.stat-label');
+            if (firstStatNumber && firstStatLabel) {
+                firstStatNumber.textContent = formatStatNumber(stats.totalPlayers);
+                firstStatLabel.textContent = 'Joueurs inscrits';
+                animateStatNumber(firstStatNumber);
+            }
+            
+            // Mettre à jour le deuxième bloc: Questions total
+            const secondStatNumber = statItems[1].querySelector('.stat-number');
+            const secondStatLabel = statItems[1].querySelector('.stat-label');
+            if (secondStatNumber && secondStatLabel) {
+                secondStatNumber.textContent = formatStatNumber(stats.totalQuestions);
+                secondStatLabel.textContent = 'Questions disponibles';
+                animateStatNumber(secondStatNumber);
+            }
+            
+            // Mettre à jour le troisième bloc: Défis joués
+            const thirdStatNumber = statItems[2].querySelector('.stat-number');
+            const thirdStatLabel = statItems[2].querySelector('.stat-label');
+            if (thirdStatNumber && thirdStatLabel) {
+                thirdStatNumber.textContent = formatStatNumber(stats.totalDuelsPlayed);
+                thirdStatLabel.textContent = 'Défis joués';
+                animateStatNumber(thirdStatNumber);
+            }
+        }
+        
+        console.log('✅ Stats affichées sur la page d\'accueil');
+    } catch (error) {
+        console.error('❌ Erreur affichage stats:', error);
+    }
+}
+
+/**
+ * Animer l'apparition du nombre de stat
+ */
+function animateStatNumber(element) {
+    element.style.animation = 'none';
+    setTimeout(() => {
+        element.style.animation = 'pulse 0.6s ease-in-out';
+    }, 10);
+}
+
+// ===========================
 // BUTTON INTERACTIONS
 // ===========================
 function initButtons() {
@@ -161,6 +243,9 @@ window.onAuthStateChanged = function(isLoggedIn, user, isAdminUser) {
         console.warn('⚠️ Bouton de connexion non trouvé');
         return;
     }
+    
+    // Charger les stats de la page d'accueil (appelé une fois que Firebase est prêt)
+    loadHomePageStats();
     
     if (isLoggedIn && user) {
         // User is logged in

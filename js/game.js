@@ -15,14 +15,6 @@ const CONFIG = {
 };
 
 // ===========================
-// CATEGORY SELECTION STATE
-// ===========================
-let categoryState = {
-    selectedCategories: [],
-    allCategoriesSelected: false
-};
-
-// ===========================
 // GAME STATE
 // ===========================
 let gameState = {
@@ -65,10 +57,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadPlayerProfile(user.uid);
     }
     
-    initCategoryModal();
     initParticles();
     initConfetti();
-    showCategoryModal();
+    
+    // Vérifier que les questions sont disponibles et démarrer directement
+    if (FIREBASE_QUESTIONS.length < CONFIG.totalQuestions) {
+        alert('❌ Pas assez de questions disponibles. Veuillez vérifier votre connexion à la base de données.');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    startGameDirectly();
 });
 
 async function loadFirebaseQuestions() {
@@ -79,154 +78,20 @@ async function loadFirebaseQuestions() {
             FIREBASE_QUESTIONS = result.questions;
             console.log(`✅ ${FIREBASE_QUESTIONS.length} questions chargées depuis Firebase`);
         } else {
-            console.log('⚠️ Aucune question dans Firebase, utilisation des questions locales');
-            FIREBASE_QUESTIONS = QUESTIONS;
+            console.error('❌ Aucune question disponible dans la base de données');
+            FIREBASE_QUESTIONS = [];
         }
     } catch (error) {
         console.error('❌ Erreur chargement questions Firebase:', error);
-        // Fallback to local questions
-        FIREBASE_QUESTIONS = QUESTIONS;
-        console.log('⚠️ Utilisation des questions locales en secours');
+        FIREBASE_QUESTIONS = [];
     }
 }
 
-function initCategoryModal() {
-    // Générer la grille de catégories
-    const categoriesGrid = document.getElementById('categoriesGrid');
-    categoriesGrid.innerHTML = '';
-    
-    ALL_CATEGORIES.forEach(category => {
-        const categoryItem = document.createElement('button');
-        categoryItem.className = 'category-item';
-        categoryItem.dataset.category = category;
-        
-        const icon = CATEGORY_ICONS[category] || 'fa-question';
-        
-        categoryItem.innerHTML = `
-            <i class="fas ${icon} category-item-icon"></i>
-            <span class="category-item-name">${category}</span>
-            <i class="fas fa-check category-check"></i>
-        `;
-        
-        categoryItem.addEventListener('click', () => toggleCategory(category, categoryItem));
-        categoriesGrid.appendChild(categoryItem);
-    });
-    
-    // Bouton "Toutes les catégories"
-    document.getElementById('categoryAllBtn').addEventListener('click', toggleAllCategories);
-    
-    // Bouton "Annuler"
-    document.getElementById('btnCancelCategory').addEventListener('click', () => {
-        window.location.href = 'index.html';
-    });
-    
-    // Bouton "Commencer"
-    document.getElementById('btnStartGame').addEventListener('click', startGameWithCategories);
-}
-
-function showCategoryModal() {
-    document.getElementById('categoryModal').classList.remove('hidden');
-    document.querySelector('.game-header').style.display = 'none';
-    document.querySelector('.game-content').style.display = 'none';
-}
-
-function hideCategoryModal() {
-    document.getElementById('categoryModal').classList.add('hidden');
-    document.querySelector('.game-header').style.display = 'flex';
-    document.querySelector('.game-content').style.display = 'block';
-}
-
-function toggleCategory(category, element) {
-    if (categoryState.allCategoriesSelected) {
-        // Désélectionner "Toutes les catégories" si on clique sur une catégorie spécifique
-        categoryState.allCategoriesSelected = false;
-        document.getElementById('categoryAllBtn').classList.remove('selected');
-    }
-    
-    const index = categoryState.selectedCategories.indexOf(category);
-    
-    if (index > -1) {
-        // Désélectionner
-        categoryState.selectedCategories.splice(index, 1);
-        element.classList.remove('selected');
-    } else {
-        // Sélectionner (max 5)
-        if (categoryState.selectedCategories.length < CONFIG.maxCategorySelection) {
-            categoryState.selectedCategories.push(category);
-            element.classList.add('selected');
-        }
-    }
-    
-    updateCategoryUI();
-}
-
-function toggleAllCategories() {
-    const allBtn = document.getElementById('categoryAllBtn');
-    const categoryItems = document.querySelectorAll('.category-item');
-    
-    categoryState.allCategoriesSelected = !categoryState.allCategoriesSelected;
-    
-    if (categoryState.allCategoriesSelected) {
-        allBtn.classList.add('selected');
-        categoryState.selectedCategories = [];
-        categoryItems.forEach(item => item.classList.remove('selected'));
-    } else {
-        allBtn.classList.remove('selected');
-    }
-    
-    updateCategoryUI();
-}
-
-function updateCategoryUI() {
-    const count = categoryState.allCategoriesSelected ? ALL_CATEGORIES.length : categoryState.selectedCategories.length;
-    document.getElementById('categoryCount').textContent = count;
-    
-    const startBtn = document.getElementById('btnStartGame');
-    const canStart = categoryState.allCategoriesSelected || categoryState.selectedCategories.length > 0;
-    startBtn.disabled = !canStart;
-    
-    // Désactiver les catégories non sélectionnées si on a atteint la limite
-    if (categoryState.selectedCategories.length >= CONFIG.maxCategorySelection && !categoryState.allCategoriesSelected) {
-        document.querySelectorAll('.category-item').forEach(item => {
-            if (!item.classList.contains('selected')) {
-                item.classList.add('disabled');
-            }
-        });
-    } else {
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.classList.remove('disabled');
-        });
-    }
-}
-
-function startGameWithCategories() {
-    // Filtrer les questions selon les catégories sélectionnées
-    let filteredQuestions;
-    
-    // Use Firebase questions if available, otherwise use local
-    const questionsSource = FIREBASE_QUESTIONS.length > 0 ? FIREBASE_QUESTIONS : QUESTIONS;
-    
-    if (categoryState.allCategoriesSelected) {
-        filteredQuestions = [...questionsSource];
-    } else {
-        filteredQuestions = questionsSource.filter(q => 
-            categoryState.selectedCategories.includes(q.category)
-        );
-    }
-    
-    // Vérifier qu'on a assez de questions
-    if (filteredQuestions.length < CONFIG.totalQuestions) {
-        alert(`Pas assez de questions disponibles pour les catégories sélectionnées. Minimum requis : ${CONFIG.totalQuestions}`);
-        return;
-    }
-    
-    // Mélanger et sélectionner les questions
-    gameState.questions = shuffleArray(filteredQuestions).slice(0, CONFIG.totalQuestions);
+function startGameDirectly() {
+    // Charger toutes les questions depuis Firebase
+    gameState.questions = shuffleArray([...FIREBASE_QUESTIONS]).slice(0, CONFIG.totalQuestions);
     gameState.startTime = Date.now();
     gameState.gameStarted = true;
-    
-    // Cacher la modal et afficher le jeu
-    hideCategoryModal();
     
     // Initialiser les event listeners du jeu
     initGameEventListeners();
@@ -260,14 +125,6 @@ function displayQuestion() {
     document.getElementById('progressBar').style.width = `${progress}%`;
     
     document.getElementById('questionText').textContent = question.question;
-    
-    // Afficher la catégorie avec icône Font Awesome
-    const categoryElement = document.getElementById('questionCategory');
-    const iconClass = CATEGORY_ICONS[question.category] || 'fa-book';
-    categoryElement.innerHTML = `
-        <i class="fas ${iconClass} category-icon"></i>
-        <span class="category-name">${question.category}</span>
-    `;
     
     const answerButtons = document.querySelectorAll('.answer-btn');
     question.answers.forEach((answer, index) => {
@@ -478,12 +335,10 @@ async function endGame() {
     document.getElementById('gameOverModal').classList.add('show');
     
     // Save game result to Firebase if user is logged in
-    const selectedCats = categoryState.allCategoriesSelected ? ['all'] : categoryState.selectedCategories;
     await saveGameResult({
         score: gameState.score,
         correctAnswers: gameState.correctAnswers,
-        wrongAnswers: gameState.wrongAnswers,
-        categories: selectedCats
+        wrongAnswers: gameState.wrongAnswers
     });
 }
 
@@ -505,24 +360,11 @@ function replayGame() {
         gameStarted: false
     };
     
-    // Réinitialiser l'état des catégories
-    categoryState = {
-        selectedCategories: [],
-        allCategoriesSelected: false
-    };
-    
     document.getElementById('scoreValue').textContent = '0';
     document.getElementById('timerValue').textContent = CONFIG.timePerQuestion;
     
-    // Réafficher la modal de sélection de catégories
-    showCategoryModal();
-    
-    // Réinitialiser l'interface de sélection
-    document.querySelectorAll('.category-item').forEach(item => {
-        item.classList.remove('selected', 'disabled');
-    });
-    document.getElementById('categoryAllBtn').classList.remove('selected');
-    updateCategoryUI();
+    // Démarrer directement une nouvelle partie
+    startGameDirectly();
 }
 
 function goHome() {

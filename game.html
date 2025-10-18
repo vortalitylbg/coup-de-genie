@@ -59,11 +59,7 @@
                 <div class="question-number" id="questionNumber">Question 1</div>
                 <h2 class="question-text" id="questionText">Chargement de la question...</h2>
                 
-                <!-- Catégorie de la question -->
-                <div class="question-category" id="questionCategory">
-                    <i class="fas fa-book category-icon"></i>
-                    <span class="category-name">Culture Générale</span>
-                </div>
+    
             </div>
 
             <!-- Grille de réponses -->
@@ -177,49 +173,6 @@
                         <span class="btn-text">Accueil</span>
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de sélection de catégories -->
-    <div class="category-modal" id="categoryModal">
-        <div class="category-modal-content">
-            <div class="category-modal-header">
-                <h2 class="category-modal-title">
-                    <i class="fas fa-list-check"></i>
-                    Choisissez vos catégories
-                </h2>
-                <p class="category-modal-subtitle">Sélectionnez jusqu'à 5 catégories ou jouez avec toutes</p>
-            </div>
-            
-            <div class="category-modal-body">
-                <!-- Bouton "Toutes les catégories" -->
-                <button class="category-all-btn" id="categoryAllBtn">
-                    <i class="fas fa-globe"></i>
-                    <span>Toutes les catégories</span>
-                    <i class="fas fa-check category-check"></i>
-                </button>
-                
-                <!-- Grille de catégories -->
-                <div class="categories-grid" id="categoriesGrid">
-                    <!-- Les catégories seront générées dynamiquement par JS -->
-                </div>
-                
-                <!-- Compteur de sélection -->
-                <div class="category-counter">
-                    <span id="categoryCount">0</span> / 5 catégories sélectionnées
-                </div>
-            </div>
-            
-            <div class="category-modal-footer">
-                <button class="btn btn-secondary" id="btnCancelCategory">
-                    <i class="fas fa-arrow-left btn-icon"></i>
-                    <span class="btn-text">Retour</span>
-                </button>
-                <button class="btn btn-primary" id="btnStartGame" disabled>
-                    <i class="fas fa-play btn-icon"></i>
-                    <span class="btn-text">Commencer</span>
-                </button>
             </div>
         </div>
     </div>

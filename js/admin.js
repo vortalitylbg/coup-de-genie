@@ -11,7 +11,6 @@ let editingQuestionId = null;
 document.addEventListener('DOMContentLoaded', () => {
     initParticles();
     initEventListeners();
-    populateCategorySelects();
 });
 
 // Check if user is admin - Called automatically by Firebase observer
@@ -42,7 +41,6 @@ function initEventListeners() {
     document.getElementById('btnCancelModal').addEventListener('click', closeQuestionModal);
     document.getElementById('modalOverlay').addEventListener('click', closeQuestionModal);
     document.getElementById('btnSaveQuestion').addEventListener('click', handleSaveQuestion);
-    document.getElementById('categoryFilter').addEventListener('change', filterQuestions);
     document.getElementById('searchInput').addEventListener('input', filterQuestions);
 }
 
@@ -101,10 +99,6 @@ function displayQuestions(questions) {
     questionsList.innerHTML = questions.map(q => `
         <div class="question-item" data-id="${q.id}">
             <div class="question-item-header">
-                <div class="question-item-category">
-                    <i class="fas ${CATEGORY_ICONS[q.category] || 'fa-question'}"></i>
-                    <span>${q.category}</span>
-                </div>
                 <div class="question-item-actions">
                     <button class="btn-icon btn-edit" onclick="editQuestion('${q.id}')">
                         <i class="fas fa-edit"></i>
@@ -135,15 +129,9 @@ function displayQuestions(questions) {
 // FILTER & SEARCH
 // ===========================
 function filterQuestions() {
-    const categoryFilter = document.getElementById('categoryFilter').value;
     const searchQuery = document.getElementById('searchInput').value.toLowerCase();
     
     let filtered = allQuestions;
-    
-    // Filter by category
-    if (categoryFilter) {
-        filtered = filtered.filter(q => q.category === categoryFilter);
-    }
     
     // Filter by search query
     if (searchQuery) {
@@ -172,7 +160,6 @@ function openQuestionModal(questionId = null) {
         if (question) {
             document.getElementById('questionId').value = questionId;
             document.getElementById('questionText').value = question.question;
-            document.getElementById('questionCategory').value = question.category;
             document.getElementById('answer0').value = question.answers[0];
             document.getElementById('answer1').value = question.answers[1];
             document.getElementById('answer2').value = question.answers[2];
@@ -209,7 +196,6 @@ async function handleSaveQuestion() {
     
     const questionData = {
         question: document.getElementById('questionText').value.trim(),
-        category: document.getElementById('questionCategory').value,
         answers: [
             document.getElementById('answer0').value.trim(),
             document.getElementById('answer1').value.trim(),
@@ -281,29 +267,8 @@ async function deleteQuestionConfirm(questionId) {
 // MIGRATION
 // ===========================
 async function handleMigration() {
-    if (!confirm(`Voulez-vous migrer les ${QUESTIONS.length} questions locales vers Firebase ?\n\nAttention : Cette opération peut prendre du temps.`)) {
-        return;
-    }
-    
-    const btn = document.getElementById('btnMigrateQuestions');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i><span class="btn-text">Migration en cours...</span>';
-    
-    try {
-        const result = await migrateQuestionsToFirebase(QUESTIONS);
-        if (result.success) {
-            alert(`Migration réussie ! ${result.count} questions ont été migrées.`);
-            loadDashboardData();
-        } else {
-            alert('Erreur : ' + result.error);
-        }
-    } catch (error) {
-        console.error('Error during migration:', error);
-        alert('Erreur lors de la migration');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-database btn-icon"></i><span class="btn-text">Migrer les questions locales</span>';
-    }
+    // Les questions locales ont été supprimées - tout fonctionne avec Firebase
+    alert('✅ Toutes les questions sont maintenant stockées dans Firebase.\n\nAucune migration locale n\'est nécessaire.');
 }
 
 // ===========================
@@ -317,16 +282,15 @@ function handleExport() {
     
     try {
         // Convertir les questions en CSV
-        let csv = 'Catégorie,Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication\n';
+        let csv = 'Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication\n';
         
         allQuestions.forEach(q => {
             const answers = q.answers.map(a => `"${a.replace(/"/g, '""')}"`).join(',');
             const correctAnswer = String.fromCharCode(65 + q.correct);
-            const category = `"${q.category.replace(/"/g, '""')}"`;
             const question = `"${q.question.replace(/"/g, '""')}"`;
             const explanation = `"${q.explanation.replace(/"/g, '""')}"`;
             
-            csv += `${category},${question},${answers},${correctAnswer},${explanation}\n`;
+            csv += `${question},${answers},${correctAnswer},${explanation}\n`;
         });
         
         // Créer un blob et télécharger
@@ -373,14 +337,21 @@ async function handleImport(event) {
         for (let i = 1; i < lines.length; i++) {
             const row = parseCSVLine(lines[i]);
             
-            if (row.length < 8) {
+            // Support both old format (with category) and new format (without)
+            let question, answerA, answerB, answerC, answerD, correctAnswer, explanation;
+            
+            if (row.length === 8) {
+                // Old format: Catégorie,Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication
+                [, question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
+            } else if (row.length === 7) {
+                // New format: Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication
+                [question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
+            } else {
                 invalidRows++;
                 continue;
             }
             
-            const [category, question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
-            
-            if (!category || !question || !answerA || !answerB || !answerC || !answerD || !correctAnswer || !explanation) {
+            if (!question || !answerA || !answerB || !answerC || !answerD || !correctAnswer || !explanation) {
                 invalidRows++;
                 continue;
             }
@@ -393,7 +364,6 @@ async function handleImport(event) {
             }
             
             questions.push({
-                category: category.trim(),
                 question: question.trim(),
                 answers: [answerA.trim(), answerB.trim(), answerC.trim(), answerD.trim()],
                 correct: correctIndex,
@@ -477,24 +447,9 @@ async function handleLogout() {
 }
 
 // ===========================
-// POPULATE SELECTS
+// CATEGORY FILTER (désactivé - plus de catégories)
 // ===========================
-function populateCategorySelects() {
-    const categorySelect = document.getElementById('questionCategory');
-    const categoryFilter = document.getElementById('categoryFilter');
-    
-    ALL_CATEGORIES.forEach(category => {
-        const option1 = document.createElement('option');
-        option1.value = category;
-        option1.textContent = category;
-        categorySelect.appendChild(option1);
-        
-        const option2 = document.createElement('option');
-        option2.value = category;
-        option2.textContent = category;
-        categoryFilter.appendChild(option2);
-    });
-}
+// Fonction supprimée - les questions n'ont plus de catégories
 
 // ===========================
 // PARTICLES ANIMATION

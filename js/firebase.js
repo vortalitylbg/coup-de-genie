@@ -282,7 +282,6 @@ async function addQuestion(questionData) {
             question: questionData.question,
             answers: questionData.answers,
             correct: questionData.correct,
-            category: questionData.category,
             explanation: questionData.explanation,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             createdBy: user.uid
@@ -315,7 +314,6 @@ async function updateQuestion(questionId, questionData) {
             question: questionData.question,
             answers: questionData.answers,
             correct: questionData.correct,
-            category: questionData.category,
             explanation: questionData.explanation,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -1467,6 +1465,49 @@ window.deactivatePremium = deactivatePremium;
 window.addAchievement = addAchievement;
 
 console.log('🔥 Firebase initialisé avec succès');
+
+// ===========================
+// HOME PAGE STATISTICS
+// ===========================
+
+/**
+ * Récupérer les statistiques pour la page d'accueil
+ */
+async function getHomePageStats() {
+    try {
+        // 1. Nombre total de joueurs (documents dans la collection 'users')
+        const usersSnapshot = await db.collection('users').get();
+        const totalPlayers = usersSnapshot.size;
+        
+        // 2. Nombre total de questions
+        const questionsSnapshot = await db.collection('questions').get();
+        const totalQuestions = questionsSnapshot.size;
+        
+        // 3. Nombre total de défis joués (somme des duelsPlayed de tous les utilisateurs)
+        let totalDuelsPlayed = 0;
+        usersSnapshot.forEach(doc => {
+            const userData = doc.data();
+            totalDuelsPlayed += userData.duelsPlayed || 0;
+        });
+        
+        console.log('✅ Stats chargées:', { totalPlayers, totalQuestions, totalDuelsPlayed });
+        
+        return {
+            success: true,
+            totalPlayers: totalPlayers,
+            totalQuestions: totalQuestions,
+            totalDuelsPlayed: totalDuelsPlayed
+        };
+    } catch (error) {
+        console.error('❌ Erreur chargement stats:', error);
+        return {
+            success: false,
+            totalPlayers: 0,
+            totalQuestions: 0,
+            totalDuelsPlayed: 0
+        };
+    }
+}
 
 // ===========================
 // AUTO-INITIALIZE AUTH STATE OBSERVER
