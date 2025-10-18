@@ -12,6 +12,9 @@ const CONFIG = {
     }
 };
 
+// Flag pour éviter d'appeler loadHomePageStats plusieurs fois
+let homePageStatsLoaded = false;
+
 // ===========================
 // INITIALIZATION
 // ===========================
@@ -80,16 +83,36 @@ function formatStatNumber(num) {
  */
 async function loadHomePageStats() {
     try {
+        // Éviter d'appeler la fonction plusieurs fois
+        if (homePageStatsLoaded) {
+            console.log('ℹ️ Stats déjà chargées');
+            return;
+        }
+        
         // Vérifier que getHomePageStats existe (Firebase doit être chargé)
         if (typeof getHomePageStats !== 'function') {
             console.warn('⚠️ getHomePageStats pas encore disponible');
             return;
         }
         
+        console.log('📊 Chargement des stats de la page d\'accueil...');
+        
         const stats = await getHomePageStats();
+        
+        console.log('📦 Stats reçues:', { 
+            totalPlayers: stats.totalPlayers, 
+            totalQuestions: stats.totalQuestions, 
+            totalDuelsPlayed: stats.totalDuelsPlayed 
+        });
         
         if (!stats.success) {
             console.warn('⚠️ Impossible de charger les stats');
+            return;
+        }
+        
+        // Vérifier que les chiffres sont corrects (> 0)
+        if (stats.totalPlayers === 0 && stats.totalQuestions === 0) {
+            console.warn('⚠️ Aucune donnée reçue, tentative de rechargement...');
             return;
         }
         
@@ -125,21 +148,14 @@ async function loadHomePageStats() {
             }
         }
         
+        homePageStatsLoaded = true;
         console.log('✅ Stats affichées sur la page d\'accueil');
     } catch (error) {
         console.error('❌ Erreur affichage stats:', error);
     }
 }
 
-/**
- * Animer l'apparition du nombre de stat
- */
-function animateStatNumber(element) {
-    element.style.animation = 'none';
-    setTimeout(() => {
-        element.style.animation = 'pulse 0.6s ease-in-out';
-    }, 10);
-}
+
 
 // ===========================
 // BUTTON INTERACTIONS
@@ -729,20 +745,24 @@ function initStatsAnimation() {
 
 function animateStatNumber(element) {
     const finalText = element.textContent;
-    const hasComma = finalText.includes(',');
-    const hasM = finalText.includes('M');
     
+    // Parser le nombre final correctement
     let finalNumber;
-    if (hasM) {
-        finalNumber = parseFloat(finalText) * 1000;
+    let format = 'number'; // 'number', 'K', ou 'M'
+    
+    if (finalText.includes('M')) {
+        format = 'M';
+        finalNumber = parseFloat(finalText) * 1000000; // Convertir M en nombre réel
+    } else if (finalText.includes('K')) {
+        format = 'K';
+        finalNumber = parseFloat(finalText) * 1000; // Convertir K en nombre réel
     } else {
         finalNumber = parseInt(finalText.replace(/,/g, ''));
     }
     
     if (isNaN(finalNumber)) {
-        // Pour les nombres avec décimales (comme 4.8)
-        finalNumber = parseFloat(finalText);
-        if (isNaN(finalNumber)) return;
+        console.warn('⚠️ Impossible de parser le nombre:', finalText);
+        return;
     }
     
     const duration = 2000;
@@ -757,16 +777,14 @@ function animateStatNumber(element) {
         
         if (step >= steps) {
             clearInterval(timer);
-            element.textContent = finalText;
+            element.textContent = finalText; // Afficher le nombre final exactement
         } else {
-            if (hasM) {
-                element.textContent = (current / 1000).toFixed(1) + 'M';
-            } else if (hasComma) {
-                element.textContent = Math.floor(current).toLocaleString('fr-FR');
-            } else if (finalText.includes('.')) {
-                element.textContent = (current / 1000).toFixed(1);
+            if (format === 'M') {
+                element.textContent = (current / 1000000).toFixed(1) + 'M';
+            } else if (format === 'K') {
+                element.textContent = (current / 1000).toFixed(1) + 'K';
             } else {
-                element.textContent = Math.floor(current);
+                element.textContent = Math.floor(current).toLocaleString('fr-FR');
             }
         }
     }, duration / steps);

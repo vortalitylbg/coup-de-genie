@@ -483,22 +483,47 @@ async function getUserStats(userId) {
 // ===========================
 
 /**
- * Calculer le changement d'ELO après un duel (basé sur le temps restant)
+ * Calculer le changement d'ELO après un duel (basé sur le temps restant + ELO)
  * Plus le vainqueur a de temps restant, plus il gagne d'ELO
+ * Plus un joueur a d'ELO, moins il gagne (et plus il perd)
  */
 function calculateEloChange(winnerElo, loserElo, winnerTimeRemaining = 30) {
     const K = 32; // Facteur K de base
     
-    // Multiplicateur basé sur le temps restant (0 à 60 secondes)
+    // ========== MULTIPLICATEUR 1: Basé sur le temps restant ==========
     // 60s restant = x2.0, 30s = x1.5, 10s = x1.2, 0s = x1.0
     const timeMultiplier = 1 + (winnerTimeRemaining / 60);
-    const adjustedK = K * timeMultiplier;
+    
+    // ========== MULTIPLICATEUR 2: Basé sur l'ELO du joueur ==========
+    // Système de réduction d'ELO pour les joueurs forts, augmentation pour les faibles
+    // À 1000 ELO (référence) = 1.0x
+    // À 1500 ELO = 0.7x (les pros gagnent moins)
+    // À 2000 ELO = 0.4x (les très pros gagnent beaucoup moins)
+    // À 500 ELO = 1.3x (les faibles gagnent plus)
+    
+    const eloReferencePoint = 1000; // ELO de référence
+    const eloSensitivity = 0.0003; // Contrôle la force de l'effet ELO
+    
+    // Multiplicateur pour le GAGNANT (réduit si ELO élevé)
+    const winnerEloMultiplier = Math.max(0.3, 1 - ((winnerElo - eloReferencePoint) * eloSensitivity));
+    
+    // Multiplicateur pour le PERDANT (augmenté si ELO élevé)
+    const loserEloMultiplier = Math.min(2, 1 + ((loserElo - eloReferencePoint) * eloSensitivity));
+    
+    // Appliquer les multiplicateurs
+    const winnerK = K * timeMultiplier * winnerEloMultiplier;
+    const loserK = K * timeMultiplier * loserEloMultiplier;
     
     const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
     const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
     
-    const winnerChange = Math.round(adjustedK * (1 - expectedWinner));
-    const loserChange = Math.round(adjustedK * (0 - expectedLoser));
+    const winnerChange = Math.round(winnerK * (1 - expectedWinner));
+    const loserChange = Math.round(loserK * (0 - expectedLoser));
+    
+    console.log('💰 ELO Change Breakdown:', {
+        winner: { elo: winnerElo, multiplier: winnerEloMultiplier.toFixed(2), K: winnerK.toFixed(2), change: winnerChange },
+        loser: { elo: loserElo, multiplier: loserEloMultiplier.toFixed(2), K: loserK.toFixed(2), change: loserChange }
+    });
     
     return { winnerChange, loserChange };
 }
@@ -1475,20 +1500,28 @@ console.log('🔥 Firebase initialisé avec succès');
  */
 async function getHomePageStats() {
     try {
+        console.log('🔥 Récupération des stats depuis Firestore...');
+        
         // 1. Nombre total de joueurs (documents dans la collection 'users')
+        console.log('📍 Requête users...');
         const usersSnapshot = await db.collection('users').get();
         const totalPlayers = usersSnapshot.size;
+        console.log(`📊 Utilisateurs trouvés: ${totalPlayers}`);
         
         // 2. Nombre total de questions
+        console.log('📍 Requête questions...');
         const questionsSnapshot = await db.collection('questions').get();
         const totalQuestions = questionsSnapshot.size;
+        console.log(`📊 Questions trouvées: ${totalQuestions}`);
         
         // 3. Nombre total de défis joués (somme des duelsPlayed de tous les utilisateurs)
         let totalDuelsPlayed = 0;
         usersSnapshot.forEach(doc => {
             const userData = doc.data();
-            totalDuelsPlayed += userData.duelsPlayed || 0;
+            const duels = userData.duelsPlayed || 0;
+            totalDuelsPlayed += duels;
         });
+        console.log(`📊 Défis joués au total: ${totalDuelsPlayed}`);
         
         console.log('✅ Stats chargées:', { totalPlayers, totalQuestions, totalDuelsPlayed });
         
@@ -1500,6 +1533,7 @@ async function getHomePageStats() {
         };
     } catch (error) {
         console.error('❌ Erreur chargement stats:', error);
+        console.error('❌ Stack:', error.stack);
         return {
             success: false,
             totalPlayers: 0,

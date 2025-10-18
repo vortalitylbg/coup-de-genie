@@ -4,6 +4,9 @@
 
 const PREMIUM_PRICE = 4.99;
 const PREMIUM_CURRENCY = '€';
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/aFaaEW1DN9lj5p5gOk0Jq01';
+const PENDING_PURCHASE_KEY = 'pendingPremiumPurchase';
+const PURCHASE_PENDING_TTL = 1000 * 60 * 60 * 2; // 2 heures
 
 // Plan features
 const PLAN_FEATURES = {
@@ -104,19 +107,33 @@ async function initPremiumPage() {
             return;
         }
         
+        // Vérifier si un achat est en attente
+        const pendingUserId = getPendingPurchaseUserId();
+
         // Vérifier le statut premium
         console.log('✅ Vérification du statut premium...');
         const isPremiumUser = await isPremium(user.uid);
         console.log('👑 Utilisateur premium?', isPremiumUser);
-        
+
+        // Si l'utilisateur est premium et qu'un achat est en attente, nettoyer le flag local
+        if (isPremiumUser && pendingUserId === user.uid) {
+            clearPendingPurchase();
+            hideEmbeddedStripeButton();
+            showAlert('Votre abonnement premium est maintenant actif. Merci !', 'success');
+        }
+
         // Afficher les plans de pricing
         console.log('💳 Affichage des plans de pricing...');
         displayPricingPlans(isPremiumUser);
-        
+
         // Afficher le statut premium actuel si l'utilisateur est premium
         if (isPremiumUser) {
             console.log('📊 Affichage du statut premium actuel...');
             await displayCurrentPremiumStatus(user.uid);
+        } else if (pendingUserId === user.uid) {
+            await ensureStripeScriptLoaded();
+            showEmbeddedStripeButton();
+            showAlert('Paiement en cours. Terminez le paiement Stripe dans l’onglet ouvert.', 'info');
         }
         
         // Afficher les bénéfices
@@ -207,6 +224,7 @@ function displayPricingPlans(isPremiumUser) {
                         <i class="fas fa-credit-card"></i>
                         S'abonner
                     </button>
+                    <div id="stripeBuyButtonContainer" style="display: none; width: 100%; margin-top: 1rem;"></div>
                 `}
             </div>
         </div>
@@ -356,12 +374,18 @@ async function handlePremiumPurchase() {
         showAlert('Vous devez être connecté', 'error');
         return;
     }
-    
-    showAlert('La fonctionnalité Stripe sera intégrée prochainement', 'info');
-    console.log('💳 Préparation du paiement Stripe pour:', user.uid);
-    
-    // Ceci sera implémenté avec Stripe
-    // const result = await createStripeCheckoutSession(user.uid);
+
+    try {
+        await ensureStripeScriptLoaded();
+        registerPendingPurchase(user.uid);
+        showEmbeddedStripeButton();
+        setTimeout(() => {
+            window.open(STRIPE_PAYMENT_LINK, '_blank');
+        }, 100);
+    } catch (error) {
+        console.error('❌ Erreur préparation achat premium:', error);
+        showAlert("Impossible d'initialiser l'achat. Réessayez plus tard.", 'error');
+    }
 }
 
 /**
@@ -369,6 +393,118 @@ async function handlePremiumPurchase() {
  */
 function setupEventListeners() {
     // À ajouter si des boutons supplémentaires sont nécessaires
+}
+
+/**
+ * Enregistrer un achat premium en attente
+ */
+function registerPendingPurchase(userId) {
+    const payload = {
+        userId,
+        createdAt: Date.now(),
+        expiryAt: Date.now() + PURCHASE_PENDING_TTL
+    };
+    localStorage.setItem(PENDING_PURCHASE_KEY, JSON.stringify(payload));
+}
+
+/**
+ * Vérifier si un achat premium est en attente et non expiré
+ */
+function getPendingPurchaseUserId() {
+    try {
+        const raw = localStorage.getItem(PENDING_PURCHASE_KEY);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (!data || !data.userId || !data.expiryAt) {
+            localStorage.removeItem(PENDING_PURCHASE_KEY);
+            return null;
+        }
+        if (Date.now() > data.expiryAt) {
+            localStorage.removeItem(PENDING_PURCHASE_KEY);
+            return null;
+        }
+        return data.userId;
+    } catch (error) {
+        console.warn('⚠️ Erreur lecture achat pending:', error);
+        localStorage.removeItem(PENDING_PURCHASE_KEY);
+        return null;
+    }
+}
+
+/**
+ * Supprimer le flag d'achat en attente
+ */
+function clearPendingPurchase() {
+    localStorage.removeItem(PENDING_PURCHASE_KEY);
+}
+
+/**
+ * Afficher le bouton Stripe intégré
+ */
+function showEmbeddedStripeButton() {
+    const container = document.getElementById('stripeBuyButtonContainer');
+    if (!container) return;
+
+    if (!container.querySelector('stripe-buy-button')) {
+        const buyButtonElement = document.createElement('stripe-buy-button');
+        buyButtonElement.setAttribute('buy-button-id', 'buy_btn_1SJh4mAGYeUDmVwDwskBwan0');
+        buyButtonElement.setAttribute('publishable-key', 'pk_live_51Nev8mAGYeUDmVwDqZTc4A8oEaNkEGDMAonp6EAmxzUGluphF3YFFu5t7eL1Ov9ZsIpzXgm6u93zhIGpyW1bjakB00BRo9tUr1');
+        container.appendChild(buyButtonElement);
+    }
+
+    container.style.display = 'block';
+}
+
+/**
+ * Masquer le bouton Stripe intégré
+ */
+function hideEmbeddedStripeButton() {
+    const container = document.getElementById('stripeBuyButtonContainer');
+    if (!container) return;
+    container.style.display = 'none';
+}
+
+/**
+ * S'assurer que le script Stripe Buy Button est chargé
+ */
+function ensureStripeScriptLoaded() {
+    return new Promise((resolve, reject) => {
+        try {
+            const scriptContainer = document.getElementById('stripeBuyButtonScript');
+            if (!scriptContainer) {
+                return reject(new Error('Conteneur pour le script Stripe introuvable.'));
+            }
+
+            const isLoaded = scriptContainer.getAttribute('data-loaded') === 'true';
+            if (isLoaded) {
+                return resolve(true);
+            }
+
+            const existingScript = document.querySelector('script[data-stripe-buy-button="true"]');
+            if (existingScript) {
+                scriptContainer.setAttribute('data-loaded', 'true');
+                return resolve(true);
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://js.stripe.com/v3/buy-button.js';
+            script.async = true;
+            script.setAttribute('data-stripe-buy-button', 'true');
+
+            script.onload = () => {
+                scriptContainer.setAttribute('data-loaded', 'true');
+                resolve(true);
+            };
+
+            script.onerror = () => {
+                reject(new Error('Impossible de charger le script Stripe.'));
+            };
+
+            scriptContainer.appendChild(script);
+        } catch (error) {
+            reject(error);
+        }
+    });
 }
 
 /**
