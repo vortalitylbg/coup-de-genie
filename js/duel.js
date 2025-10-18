@@ -40,26 +40,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     await waitForFirebase();
     console.log('✅ Firebase prêt');
     
-    // Attendre un peu pour que l'auth state soit restauré
-    setTimeout(() => {
-        const user = getCurrentUser();
-        console.log('🔐 Vérification de l\'utilisateur:', user ? user.email : 'non connecté');
-        
-        if (!user) {
-            console.error('❌ Utilisateur non connecté');
-            alert('Vous devez être connecté pour jouer en mode duel !');
-            window.location.href = 'index.html';
-            return;
-        }
-        
-        console.log('✅ Utilisateur connecté:', user.email);
-        
-        if (!isInitialized) {
-            isInitialized = true;
-            initCategoryModal();
-            showCategoryModal();
-        }
-    }, 500); // Attendre 500ms pour que Firebase restaure la session
+    // ⚡ IMPORTANT: Attendre que Firebase restaure l'état d'authentification
+    // Cela évite une race condition où getCurrentUser() retournerait null trop tôt
+    console.log('⏳ Attente de la restauration de l\'état d\'authentification...');
+    const user = await waitForAuthReady();
+    console.log('🔐 Vérification de l\'utilisateur:', user ? user.email : 'non connecté');
+    
+    if (!user) {
+        console.error('❌ Utilisateur non connecté');
+        alert('Vous devez être connecté pour jouer en mode duel !');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    console.log('✅ Utilisateur connecté:', user.email);
+    
+    if (!isInitialized) {
+        isInitialized = true;
+        initCategoryModal();
+        showCategoryModal();
+    }
 });
 
 // Fonction pour attendre que Firebase soit prêt
@@ -377,6 +377,9 @@ function showWaitingScreen(duelData) {
         document.getElementById('player2Name2').textContent = duelData.player2.displayName;
     }
     
+    // Charger les profils des joueurs (icônes + couleurs)
+    loadBothPlayerProfiles(duelData);
+    
     // Mettre à jour les indicateurs de prêt
     const player1Ready = document.getElementById('player1Ready');
     const player2Ready = document.getElementById('player2Ready');
@@ -449,6 +452,9 @@ async function startGame() {
         if (duelDoc.exists) {
             const duelData = duelDoc.data();
             console.log('📊 Données du duel chargées:', duelData);
+            
+            // Charger les profils des joueurs (icônes + couleurs)
+            await loadBothPlayerProfiles(duelData);
             
             // Charger la première question
             loadQuestion(duelData);
@@ -993,5 +999,186 @@ function showResults(duelData) {
         console.log('🧹 Nettoyage du listener Firestore (après affichage des résultats)');
         duelState.duelUnsubscribe();
         duelState.duelUnsubscribe = null;
+    }
+}
+
+// ===========================
+// PLAYER PROFILE DISPLAY
+// ===========================
+
+/**
+ * Charger et afficher les profils des deux joueurs (icônes + couleurs des pseudos)
+ */
+async function loadBothPlayerProfiles(duelData) {
+    try {
+        console.log('👥 Chargement des profils des deux joueurs...');
+        
+        // Charger le profil du joueur 1
+        await loadDuelPlayerProfile(1, duelData.player1.uid, duelData.player1.displayName);
+        
+        // Charger le profil du joueur 2 si présent
+        if (duelData.player2) {
+            await loadDuelPlayerProfile(2, duelData.player2.uid, duelData.player2.displayName);
+        }
+        
+        console.log('✅ Profils des joueurs chargés');
+    } catch (error) {
+        console.error('❌ Erreur lors du chargement des profils:', error);
+    }
+}
+
+/**
+ * Charger et afficher le profil d'un joueur spécifique
+ */
+async function loadDuelPlayerProfile(playerNumber, userId, displayName) {
+    try {
+        // Vérifier si le joueur est premium
+        const hasPremium = await isPremium(userId);
+        
+        // Récupérer les données premium (profileIcon et profileColor)
+        const premiumResult = await getPremiumData(userId);
+        if (!premiumResult.success) {
+            console.error(`❌ Erreur chargement données premium joueur ${playerNumber}:`, premiumResult.error);
+            return;
+        }
+        
+        const userData = premiumResult;
+        console.log(`👤 Données premium joueur ${playerNumber}:`, userData);
+        console.log(`👑 Joueur ${playerNumber} premium? ${hasPremium}`);
+        
+        // Sélectionner les éléments DOM appropriés
+        const waitingNameElement = document.getElementById(`player${playerNumber}Name`);
+        const gameNameElement = document.getElementById(`player${playerNumber}NameGame`);
+        const waitingIconElement = document.getElementById(`duelPlayer${playerNumber}ProfileIcon`);
+        const gameIconElement = document.getElementById(`duelPlayer${playerNumber}GameIcon`);
+        const waitingFallbackIcon = document.getElementById(`duelPlayer${playerNumber}FallbackIcon`);
+        const waitingCrownElement = document.getElementById(`duelPlayer${playerNumber}PremiumCrown`);
+        const gameCrownElement = document.getElementById(`duelPlayer${playerNumber}GameCrown`);
+        
+        console.log(`🔍 Éléments trouvés pour joueur ${playerNumber}:`, {
+            waitingIcon: !!waitingIconElement,
+            gameIcon: !!gameIconElement,
+            waitingFallback: !!waitingFallbackIcon,
+            waitingName: !!waitingNameElement,
+            gameName: !!gameNameElement
+        });
+        
+        // Appliquer la couleur ou le dégradé du pseudo si elle existe (premium)
+        if (userData.profileColor) {
+            let colorStyle = userData.profileColor;
+            
+            // Priorité : dégradé du pseudo > couleur unie du pseudo > gradient de l'icône
+            let isGradient = false;
+            let solidColor = null;
+            
+            if (userData.pseudoGradient) {
+                const gradientData = PSEUDO_GRADIENTS && PSEUDO_GRADIENTS[userData.pseudoGradient];
+                if (gradientData) {
+                    colorStyle = gradientData.gradient;
+                    isGradient = true;
+                }
+            } else if (userData.pseudoColor) {
+                const colorData = PSEUDO_COLORS && PSEUDO_COLORS[userData.pseudoColor];
+                if (colorData) {
+                    solidColor = colorData.color;
+                    isGradient = false;
+                }
+            } else if (PROFILE_ICONS && PROFILE_ICONS[userData.profileIcon]?.gradient) {
+                colorStyle = PROFILE_ICONS[userData.profileIcon].gradient;
+                isGradient = true;
+            }
+            
+            // Appliquer le style au pseudo du joueur en attente
+            if (waitingNameElement) {
+                if (isGradient && colorStyle) {
+                    waitingNameElement.style.backgroundImage = colorStyle;
+                    waitingNameElement.style.webkitBackgroundClip = 'text';
+                    waitingNameElement.style.webkitTextFillColor = 'transparent';
+                    waitingNameElement.style.backgroundClip = 'text';
+                    waitingNameElement.style.color = '';
+                } else if (solidColor) {
+                    waitingNameElement.style.backgroundImage = '';
+                    waitingNameElement.style.webkitBackgroundClip = '';
+                    waitingNameElement.style.webkitTextFillColor = '';
+                    waitingNameElement.style.backgroundClip = '';
+                    waitingNameElement.style.color = solidColor;
+                }
+            }
+            
+            // Appliquer le style au pseudo du joueur en jeu
+            if (gameNameElement) {
+                if (isGradient && colorStyle) {
+                    gameNameElement.style.backgroundImage = colorStyle;
+                    gameNameElement.style.webkitBackgroundClip = 'text';
+                    gameNameElement.style.webkitTextFillColor = 'transparent';
+                    gameNameElement.style.backgroundClip = 'text';
+                    gameNameElement.style.color = '';
+                } else if (solidColor) {
+                    gameNameElement.style.backgroundImage = '';
+                    gameNameElement.style.webkitBackgroundClip = '';
+                    gameNameElement.style.webkitTextFillColor = '';
+                    gameNameElement.style.backgroundClip = '';
+                    gameNameElement.style.color = solidColor;
+                }
+            }
+            console.log(`✅ Couleur/dégradé du pseudo appliqué pour le joueur ${playerNumber}`);
+        }
+        
+        // Afficher l'icône de profil si elle existe (premium)
+        if (userData.profileIcon && PROFILE_ICONS && PROFILE_ICONS[userData.profileIcon]) {
+            const iconData = PROFILE_ICONS[userData.profileIcon];
+            console.log(`🎨 Icône trouvée pour joueur ${playerNumber}:`, iconData);
+            
+            if (iconData.image) {
+                // Afficher l'icône dans l'écran d'attente
+                if (waitingIconElement) {
+                    waitingIconElement.src = iconData.image;
+                    waitingIconElement.style.borderColor = iconData.color;
+                    waitingIconElement.style.display = 'block';
+                    waitingIconElement.style.visibility = 'visible';
+                    console.log(`✅ Image d'attente affichée pour joueur ${playerNumber}`);
+                    if (waitingFallbackIcon) {
+                        waitingFallbackIcon.style.display = 'none';
+                    }
+                    // Afficher la couronne seulement si l'utilisateur est premium
+                    if (waitingCrownElement) {
+                        if (hasPremium) {
+                            waitingCrownElement.style.display = 'block';
+                            waitingCrownElement.style.color = iconData.color;
+                        } else {
+                            waitingCrownElement.style.display = 'none';
+                        }
+                    }
+                } else {
+                    console.warn(`⚠️ Élément waitingIcon non trouvé pour joueur ${playerNumber}`);
+                }
+                
+                // Afficher l'icône dans le header du jeu
+                if (gameIconElement) {
+                    gameIconElement.src = iconData.image;
+                    gameIconElement.style.borderColor = iconData.color;
+                    gameIconElement.style.display = 'block';
+                    gameIconElement.style.visibility = 'visible';
+                    console.log(`✅ Image de jeu affichée pour joueur ${playerNumber}`);
+                    // Afficher la couronne seulement si l'utilisateur est premium
+                    if (gameCrownElement) {
+                        if (hasPremium) {
+                            gameCrownElement.style.display = 'block';
+                            gameCrownElement.style.color = iconData.color;
+                        } else {
+                            gameCrownElement.style.display = 'none';
+                        }
+                    }
+                } else {
+                    console.warn(`⚠️ Élément gameIcon non trouvé pour joueur ${playerNumber}`);
+                }
+            } else {
+                console.warn(`⚠️ Pas d'image trouvée pour l'icône ${userData.profileIcon}`);
+            }
+        } else {
+            console.log(`ℹ️ Joueur ${playerNumber} n'a pas de profileIcon défini (non-premium ou non sauvegardé)`);
+        }
+    } catch (error) {
+        console.error(`❌ Erreur chargement profil joueur ${playerNumber}:`, error);
     }
 }

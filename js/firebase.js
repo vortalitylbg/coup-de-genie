@@ -75,7 +75,26 @@ async function signUp(email, password, displayName) {
             duelsPlayed: 0,
             duelsWon: 0,
             duelsLost: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            // Premium fields
+            hasPremium: false,
+            premiumExpiry: null,
+            theme: 'default',
+            profileIcon: 'icon1',
+            profileColor: '#8b5cf6',
+            tournaments: [],
+            achievements: [],
+            stripeCustomerId: null,
+            // Advanced stats fields
+            gameHistory: [],
+            categoryStats: {},
+            lastPlayedDate: null,
+            totalPlayTime: 0,
+            streakCurrent: 0,
+            streakBest: 0,
+            accuracyRate: 0,
+            averageScore: 0,
+            eloHistory: [1000]
         });
         
         console.log('✅ Inscription réussie:', user.email);
@@ -111,7 +130,26 @@ async function signInWithGoogle() {
                 duelsPlayed: 0,
                 duelsWon: 0,
                 duelsLost: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                // Premium fields
+                hasPremium: false,
+                premiumExpiry: null,
+                theme: 'default',
+                profileIcon: 'icon1',
+                profileColor: '#8b5cf6',
+                tournaments: [],
+                achievements: [],
+                stripeCustomerId: null,
+                // Advanced stats fields
+                gameHistory: [],
+                categoryStats: {},
+                lastPlayedDate: null,
+                totalPlayTime: 0,
+                streakCurrent: 0,
+                streakBest: 0,
+                accuracyRate: 0,
+                averageScore: 0,
+                eloHistory: [1000]
             });
         }
         
@@ -142,6 +180,37 @@ async function signOut() {
  */
 function getCurrentUser() {
     return auth.currentUser;
+}
+
+/**
+ * Attendre que Firebase restaure l'état d'authentification
+ * Résout avec l'utilisateur actuel ou null après le délai d'attente
+ */
+async function waitForAuthReady(timeoutMs = 3000) {
+    return new Promise((resolve) => {
+        let hasResolved = false;
+        
+        // Attendre le prochain changement d'état d'authentification
+        // C'est le seul moyen de s'assurer que Firebase a restauré l'authentification
+        const unsubscribe = auth.onAuthStateChanged((user) => {
+            if (!hasResolved) {
+                hasResolved = true;
+                unsubscribe(); // Arrêter d'écouter après le premier changement
+                console.log('✅ Firebase auth ready, user:', user ? user.email : 'null');
+                resolve(user);
+            }
+        });
+        
+        // Timeout pour éviter une attente infinie
+        setTimeout(() => {
+            if (!hasResolved) {
+                hasResolved = true;
+                unsubscribe();
+                console.warn('⏱️ Timeout waitForAuthReady - retour null');
+                resolve(auth.currentUser);
+            }
+        }, timeoutMs);
+    });
 }
 
 /**
@@ -972,6 +1041,7 @@ window.signUp = signUp;
 window.signInWithGoogle = signInWithGoogle;
 window.signOut = signOut;
 window.getCurrentUser = getCurrentUser;
+window.waitForAuthReady = waitForAuthReady;
 window.isAdmin = isAdmin;
 window.loadQuestionsFromFirebase = loadQuestionsFromFirebase;
 window.addQuestion = addQuestion;
@@ -1026,34 +1096,6 @@ async function getUserData(userId) {
 }
 
 /**
- * Mettre à jour le nom d'affichage (pseudo)
- */
-async function updateUserDisplayName(newDisplayName) {
-    try {
-        const user = getCurrentUser();
-        if (!user) {
-            throw new Error('Vous devez être connecté');
-        }
-        
-        // Mettre à jour dans Auth
-        await user.updateProfile({
-            displayName: newDisplayName
-        });
-        
-        // Mettre à jour dans Firestore
-        await db.collection('users').doc(user.uid).update({
-            displayName: newDisplayName
-        });
-        
-        console.log('✅ Pseudo mis à jour:', newDisplayName);
-        return { success: true };
-    } catch (error) {
-        console.error('❌ Erreur mise à jour pseudo:', error);
-        return { success: false, error: getErrorMessage(error.code) };
-    }
-}
-
-/**
  * Mettre à jour le mot de passe
  */
 async function updateUserPassword(currentPassword, newPassword) {
@@ -1090,6 +1132,43 @@ async function updateUserPassword(currentPassword, newPassword) {
 }
 
 /**
+ * Mettre à jour le pseudo de l'utilisateur
+ */
+async function updateUserDisplayName(newDisplayName) {
+    try {
+        const user = getCurrentUser();
+        if (!user) {
+            throw new Error('Vous devez être connecté');
+        }
+        
+        // Vérifier que le pseudo n'est pas vide
+        if (!newDisplayName || newDisplayName.trim().length < 3) {
+            return { success: false, error: 'Le pseudo doit contenir au moins 3 caractères' };
+        }
+        
+        if (newDisplayName.length > 30) {
+            return { success: false, error: 'Le pseudo ne doit pas dépasser 30 caractères' };
+        }
+        
+        // Mettre à jour le profil Firebase
+        await user.updateProfile({
+            displayName: newDisplayName.trim()
+        });
+        
+        // Mettre à jour dans Firestore
+        await db.collection('users').doc(user.uid).update({
+            displayName: newDisplayName.trim()
+        });
+        
+        console.log('✅ Pseudo mis à jour:', newDisplayName);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour pseudo:', error);
+        return { success: false, error: getErrorMessage(error.code) };
+    }
+}
+
+/**
  * Supprimer le compte utilisateur
  */
 async function deleteUserAccount() {
@@ -1099,13 +1178,28 @@ async function deleteUserAccount() {
             throw new Error('Vous devez être connecté');
         }
         
-        // Supprimer les données utilisateur de Firestore
-        await db.collection('users').doc(user.uid).delete();
+        const userId = user.uid;
         
-        // Supprimer le compte Firebase
-        await user.delete();
+        // Supprimer les données utilisateur de Firestore EN PREMIER
+        // (tant qu'on est connecté et qu'on a les permissions)
+        await db.collection('users').doc(userId).delete();
+        console.log('✅ Données Firestore supprimées');
         
-        console.log('✅ Compte supprimé');
+        // Supprimer le compte Firebase AUTH
+        // Si ça échoue, au moins les données Firestore sont déjà supprimées
+        try {
+            await user.delete();
+            console.log('✅ Compte auth supprimé');
+        } catch (authError) {
+            console.warn('⚠️ Impossible de supprimer le compte auth:', authError.code);
+            
+            if (authError.code === 'auth/requires-recent-login') {
+                throw new Error('Veuillez vous reconnecter pour supprimer votre compte');
+            }
+            throw authError;
+        }
+        
+        console.log('✅ Compte complètement supprimé');
         return { success: true };
     } catch (error) {
         console.error('❌ Erreur suppression compte:', error);
@@ -1114,7 +1208,242 @@ async function deleteUserAccount() {
             return { success: false, error: 'Veuillez vous reconnecter pour supprimer votre compte' };
         }
         
-        return { success: false, error: getErrorMessage(error.code) };
+        return { success: false, error: error.message || getErrorMessage(error.code) };
+    }
+}
+
+// ===========================
+// PREMIUM FUNCTIONS
+// ===========================
+
+/**
+ * Convertir une valeur en Date de manière robuste
+ */
+function convertToDate(value) {
+    if (!value) return null;
+    
+    // Si c'est déjà une Date
+    if (value instanceof Date) {
+        return value;
+    }
+    
+    // Si c'est un Timestamp Firebase (a une méthode toDate)
+    if (value && typeof value.toDate === 'function') {
+        return value.toDate();
+    }
+    
+    // Si c'est une string ou un nombre, essayer de le convertir
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+/**
+ * Vérifier si l'utilisateur est premium
+ */
+async function isPremium(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) return false;
+        
+        const userData = userDoc.data();
+        if (!userData.hasPremium) return false;
+        
+        // Vérifier l'expiration
+        if (userData.premiumExpiry) {
+            const expiryDate = convertToDate(userData.premiumExpiry);
+            if (!expiryDate) return false; // Format de date invalide
+            
+            if (expiryDate < new Date()) {
+                // Le premium a expiré
+                await db.collection('users').doc(userId).update({
+                    hasPremium: false,
+                    premiumExpiry: null
+                });
+                return false;
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur vérification premium:', error);
+        return false;
+    }
+}
+
+/**
+ * Obtenir les données premium d'un utilisateur
+ */
+async function getPremiumData(userId) {
+    try {
+        const userDoc = await db.collection('users').doc(userId).get();
+        if (!userDoc.exists) {
+            throw new Error('Utilisateur non trouvé');
+        }
+        
+        const userData = userDoc.data();
+        const premium = await isPremium(userId);
+        
+        // Convertir premiumExpiry de manière robuste
+        const premiumExpiry = userData.premiumExpiry ? convertToDate(userData.premiumExpiry) : null;
+        
+        return {
+            success: true,
+            hasPremium: premium,
+            premiumExpiry: premiumExpiry,
+            theme: userData.theme || 'default',
+            profileIcon: userData.profileIcon || 'icon1',
+            profileColor: userData.profileColor || '#8b5cf6',
+            pseudoColor: userData.pseudoColor || null,
+            pseudoGradient: userData.pseudoGradient || null
+        };
+    } catch (error) {
+        console.error('❌ Erreur récupération données premium:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour le thème de l'utilisateur
+ */
+async function updateUserTheme(userId, theme) {
+    try {
+        await db.collection('users').doc(userId).update({
+            theme: theme
+        });
+        console.log('✅ Thème mis à jour:', theme);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour thème:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour l'icône de profil de l'utilisateur
+ */
+async function updateProfileIcon(userId, icon) {
+    try {
+        await db.collection('users').doc(userId).update({
+            profileIcon: icon
+        });
+        console.log('✅ Icône profil mise à jour:', icon);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour icône:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour la couleur du pseudo
+ */
+async function updateProfileColor(userId, color) {
+    try {
+        await db.collection('users').doc(userId).update({
+            profileColor: color
+        });
+        console.log('✅ Couleur profil mise à jour:', color);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour couleur:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour le dégradé du pseudo
+ */
+async function updateProfileGradient(userId, gradientKey) {
+    try {
+        await db.collection('users').doc(userId).update({
+            pseudoGradient: gradientKey
+        });
+        console.log('✅ Dégradé du pseudo mis à jour:', gradientKey);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour dégradé:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Mettre à jour la couleur unie du pseudo
+ */
+async function updateProfilePseudoColor(userId, colorKey) {
+    try {
+        await db.collection('users').doc(userId).update({
+            pseudoColor: colorKey
+        });
+        console.log('✅ Couleur du pseudo mise à jour:', colorKey);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour couleur:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Activer l'abonnement premium (côté backend - à utiliser après paiement Stripe)
+ */
+async function activatePremium(userId, monthsCount = 1) {
+    try {
+        const expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + monthsCount);
+        
+        await db.collection('users').doc(userId).update({
+            hasPremium: true,
+            premiumExpiry: firebase.firestore.Timestamp.fromDate(expiryDate)
+        });
+        
+        console.log('✅ Premium activé jusqu\'au:', expiryDate);
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur activation premium:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Désactiver l'abonnement premium
+ */
+async function deactivatePremium(userId) {
+    try {
+        await db.collection('users').doc(userId).update({
+            hasPremium: false,
+            premiumExpiry: null
+        });
+        
+        console.log('✅ Premium désactivé');
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur désactivation premium:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Ajouter un achievement
+ */
+async function addAchievement(userId, achievementId) {
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            throw new Error('Utilisateur non trouvé');
+        }
+        
+        const achievements = userDoc.data().achievements || [];
+        if (!achievements.includes(achievementId)) {
+            achievements.push(achievementId);
+            await userRef.update({ achievements });
+            console.log('✅ Achievement ajouté:', achievementId);
+        }
+        
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur ajout achievement:', error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -1126,6 +1455,16 @@ window.getUserData = getUserData;
 window.updateUserDisplayName = updateUserDisplayName;
 window.updateUserPassword = updateUserPassword;
 window.deleteUserAccount = deleteUserAccount;
+window.isPremium = isPremium;
+window.getPremiumData = getPremiumData;
+window.updateUserTheme = updateUserTheme;
+window.updateProfileIcon = updateProfileIcon;
+window.updateProfileColor = updateProfileColor;
+window.updateProfileGradient = updateProfileGradient;
+window.updateProfilePseudoColor = updateProfilePseudoColor;
+window.activatePremium = activatePremium;
+window.deactivatePremium = deactivatePremium;
+window.addAchievement = addAchievement;
 
 console.log('🔥 Firebase initialisé avec succès');
 

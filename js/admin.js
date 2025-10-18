@@ -35,6 +35,9 @@ function initEventListeners() {
     document.getElementById('btnLogout').addEventListener('click', handleLogout);
     document.getElementById('btnAddQuestion').addEventListener('click', () => openQuestionModal());
     document.getElementById('btnMigrateQuestions').addEventListener('click', handleMigration);
+    document.getElementById('btnExportQuestions').addEventListener('click', handleExport);
+    document.getElementById('btnImportQuestions').addEventListener('click', () => document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', handleImport);
     document.getElementById('btnCloseModal').addEventListener('click', closeQuestionModal);
     document.getElementById('btnCancelModal').addEventListener('click', closeQuestionModal);
     document.getElementById('modalOverlay').addEventListener('click', closeQuestionModal);
@@ -301,6 +304,164 @@ async function handleMigration() {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-database btn-icon"></i><span class="btn-text">Migrer les questions locales</span>';
     }
+}
+
+// ===========================
+// EXPORT QUESTIONS
+// ===========================
+function handleExport() {
+    if (allQuestions.length === 0) {
+        alert('Aucune question à exporter');
+        return;
+    }
+    
+    try {
+        // Convertir les questions en CSV
+        let csv = 'Catégorie,Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication\n';
+        
+        allQuestions.forEach(q => {
+            const answers = q.answers.map(a => `"${a.replace(/"/g, '""')}"`).join(',');
+            const correctAnswer = String.fromCharCode(65 + q.correct);
+            const category = `"${q.category.replace(/"/g, '""')}"`;
+            const question = `"${q.question.replace(/"/g, '""')}"`;
+            const explanation = `"${q.explanation.replace(/"/g, '""')}"`;
+            
+            csv += `${category},${question},${answers},${correctAnswer},${explanation}\n`;
+        });
+        
+        // Créer un blob et télécharger
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', `cerebro-questions-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('✅ Export réussi : ' + allQuestions.length + ' questions exportées');
+        alert(`Export réussi ! ${allQuestions.length} questions ont été téléchargées.`);
+    } catch (error) {
+        console.error('❌ Erreur export:', error);
+        alert('Erreur lors de l\'export : ' + error.message);
+    }
+}
+
+// ===========================
+// IMPORT QUESTIONS
+// ===========================
+async function handleImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    try {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        if (lines.length < 2) {
+            alert('Le fichier CSV est vide ou invalide');
+            return;
+        }
+        
+        // Ignorer l'entête
+        const questions = [];
+        let invalidRows = 0;
+        
+        for (let i = 1; i < lines.length; i++) {
+            const row = parseCSVLine(lines[i]);
+            
+            if (row.length < 8) {
+                invalidRows++;
+                continue;
+            }
+            
+            const [category, question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
+            
+            if (!category || !question || !answerA || !answerB || !answerC || !answerD || !correctAnswer || !explanation) {
+                invalidRows++;
+                continue;
+            }
+            
+            // Convertir la réponse correcte (A, B, C, D) en index (0, 1, 2, 3)
+            const correctIndex = correctAnswer.trim().toUpperCase().charCodeAt(0) - 65;
+            if (correctIndex < 0 || correctIndex > 3) {
+                invalidRows++;
+                continue;
+            }
+            
+            questions.push({
+                category: category.trim(),
+                question: question.trim(),
+                answers: [answerA.trim(), answerB.trim(), answerC.trim(), answerD.trim()],
+                correct: correctIndex,
+                explanation: explanation.trim()
+            });
+        }
+        
+        if (questions.length === 0) {
+            alert('Aucune question valide trouvée dans le fichier');
+            return;
+        }
+        
+        // Confirmation avant import
+        if (!confirm(`${questions.length} questions seront importées.\n\nContinuer ?`)) {
+            return;
+        }
+        
+        const btn = document.getElementById('btnImportQuestions');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i><span class="btn-text">Import en cours...</span>';
+        
+        // Importer les questions une par une
+        let imported = 0;
+        for (const q of questions) {
+            const result = await addQuestion(q);
+            if (result.success) {
+                imported++;
+            }
+        }
+        
+        alert(`Import réussi ! ${imported}/${questions.length} questions ont été importées.\n${invalidRows > 0 ? `(${invalidRows} lignes invalides ignorées)` : ''}`);
+        loadDashboardData();
+        
+    } catch (error) {
+        console.error('❌ Erreur import:', error);
+        alert('Erreur lors de l\'import : ' + error.message);
+    } finally {
+        const btn = document.getElementById('btnImportQuestions');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-upload btn-icon"></i><span class="btn-text">Importer (CSV)</span>';
+        // Réinitialiser l'input file
+        event.target.value = '';
+    }
+}
+
+// ===========================
+// CSV PARSER
+// ===========================
+function parseCSVLine(line) {
+    const result = [];
+    let current = '';
+    let insideQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+            insideQuotes = !insideQuotes;
+        } else if (char === ',' && !insideQuotes) {
+            result.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+    
+    result.push(current);
+    return result.map(item => item.replace(/^"|"$/g, '').replace(/""/g, '"'));
 }
 
 // ===========================

@@ -66,7 +66,11 @@
                 </h2>
                 <div class="opponent-info">
                     <div class="player-card">
-                        <i class="fas fa-user" style="font-size: 2rem; color: var(--primary-purple);"></i>
+                        <div class="profile-wrapper-waiting" id="profileWrapper1Waiting">
+                            <img id="duelPlayer1ProfileIcon" src="" alt="Profil" class="profile-icon-waiting" style="display:none;">
+                            <i id="duelPlayer1PremiumCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                        </div>
+                        <i id="duelPlayer1FallbackIcon" class="fas fa-user" style="font-size: 2rem; color: var(--primary-purple);"></i>
                         <span class="player-name" id="player1Name">Vous</span>
                         <span class="player-elo">
                             <i class="fas fa-trophy"></i>
@@ -75,7 +79,11 @@
                     </div>
                     <span class="vs-badge">VS</span>
                     <div class="player-card">
-                        <i class="fas fa-user" style="font-size: 2rem; color: var(--primary-blue);"></i>
+                        <div class="profile-wrapper-waiting" id="profileWrapper2Waiting">
+                            <img id="duelPlayer2ProfileIcon" src="" alt="Profil" class="profile-icon-waiting" style="display:none;">
+                            <i id="duelPlayer2PremiumCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                        </div>
+                        <i id="duelPlayer2FallbackIcon" class="fas fa-user" style="font-size: 2rem; color: var(--primary-blue);"></i>
                         <span class="player-name" id="player2Name">Adversaire</span>
                         <span class="player-elo">
                             <i class="fas fa-trophy"></i>
@@ -115,6 +123,10 @@
             <!-- Header des joueurs -->
             <div class="duel-header">
                 <div class="player-card current-player" id="player1Card">
+                    <div class="profile-wrapper-game" id="profileWrapper1Game">
+                        <img id="duelPlayer1GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
+                        <i id="duelPlayer1GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                    </div>
                     <span class="player-name" id="player1NameGame">Vous</span>
                     <span class="player-elo">
                         <i class="fas fa-trophy"></i>
@@ -126,6 +138,10 @@
                 <span class="vs-badge">VS</span>
                 
                 <div class="player-card" id="player2Card">
+                    <div class="profile-wrapper-game" id="profileWrapper2Game">
+                        <img id="duelPlayer2GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
+                        <i id="duelPlayer2GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                    </div>
                     <span class="player-name" id="player2NameGame">Adversaire</span>
                     <span class="player-elo">
                         <i class="fas fa-trophy"></i>
@@ -343,6 +359,7 @@
     <!-- App Scripts -->
     <script src="js/questions.js"></script>
     <script src="js/firebase.js"></script>
+    <script src="js/themes.js"></script>
     <script src="js/duel.js"></script>
 </body>
 </html>

@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         /* ===========================
            PROFILE PAGE STYLES
@@ -329,6 +330,26 @@
             .profile-section {
                 padding: 1.5rem;
             }
+
+            #advancedStatsSection {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* CSS for Charts */
+        canvas {
+            max-height: 300px;
+        }
+
+        @media (max-width: 768px) {
+            #eloChart,
+            #winrateChart {
+                max-height: 250px;
+            }
+
+            [style*="grid-template-columns: 1fr 1fr"]  {
+                grid-template-columns: 1fr !important;
+            }
         }
     </style>
 </head>
@@ -374,6 +395,14 @@
                     <div class="info-item">
                         <div class="info-label">Membre depuis</div>
                         <div class="info-value" id="memberSinceDisplay">-</div>
+                    </div>
+                    <!-- ✨ Badge Premium -->
+                    <div class="info-item" id="premiumBadgeContainer" style="display: none; background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(124, 58, 237, 0.15));">
+                        <div class="info-label">Statut</div>
+                        <div class="info-value" id="premiumBadgeDisplay">
+                            <i class="fas fa-crown" style="color: #fbbf24; margin-right: 0.5rem;"></i>
+                            <span style="color: #fbbf24;">Premium 👑</span>
+                        </div>
                     </div>
                 </div>
 
@@ -477,6 +506,155 @@
                 </form>
             </div>
 
+            <!-- Section Stats Avancées (Premium) -->
+            <div class="profile-section" id="advancedStatsSection" style="display: none;">
+                <div class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    Statistiques avancées <i class="fas fa-crown" style="color: var(--accent-gold); font-size: 1rem;"></i>
+                </div>
+
+                <div style="margin-bottom: 2rem;">
+                    <p style="color: var(--accent-gold); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-sparkles"></i>
+                        Analyse détaillée de vos performances
+                    </p>
+                </div>
+
+                <!-- Grille de stats synthétiques -->
+                <div class="stats-grid" style="margin-bottom: 3rem;">
+                    <div class="stat-card">
+                        <i class="fas fa-clock stat-card-icon" style="color: var(--primary-blue);"></i>
+                        <div class="stat-card-value" id="totalPlayTimeStat">0h</div>
+                        <div class="stat-card-label">Temps de jeu</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-percentage stat-card-icon" style="color: var(--accent-gold);"></i>
+                        <div class="stat-card-value" id="accuracyRateStat">0%</div>
+                        <div class="stat-card-label">Précision</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-fire stat-card-icon" style="color: var(--error);"></i>
+                        <div class="stat-card-value" id="streakStat">0</div>
+                        <div class="stat-card-label">Meilleure série</div>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-percent stat-card-icon" style="color: var(--success);"></i>
+                        <div class="stat-card-value" id="winrateStat">0%</div>
+                        <div class="stat-card-label">Taux de victoire</div>
+                    </div>
+                </div>
+
+                <!-- Graphiques -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <!-- Graphique ELO -->
+                    <div style="background: rgba(124, 58, 237, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color);">
+                        <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.1rem;">
+                            <i class="fas fa-chart-line" style="margin-right: 0.5rem; color: var(--primary-purple);"></i>
+                            Évolution ELO
+                        </h4>
+                        <canvas id="eloChart"></canvas>
+                    </div>
+
+                    <!-- Graphique Winrate -->
+                    <div style="background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color);">
+                        <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.1rem;">
+                            <i class="fas fa-chart-pie" style="margin-right: 0.5rem; color: var(--primary-blue);"></i>
+                            Résultats Duel
+                        </h4>
+                        <canvas id="winrateChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stats par catégorie -->
+                <div style="background: rgba(251, 191, 36, 0.05); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border-color);">
+                    <h4 style="color: var(--text-primary); margin-bottom: 1rem; font-size: 1.1rem;">
+                        <i class="fas fa-bars" style="margin-right: 0.5rem; color: var(--accent-gold);"></i>
+                        Performance par catégorie
+                    </h4>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Section Premium (uniquement pour les utilisateurs premium) -->
+            <div class="profile-section" id="premiumSection" style="display: none;">
+                <div class="section-title">
+                    <i class="fas fa-crown" style="color: var(--accent-gold);"></i>
+                    Paramètres Premium
+                </div>
+
+                <div style="margin-bottom: 2rem; padding: 1rem; background: rgba(251, 191, 36, 0.1); border-radius: 12px; border-left: 4px solid var(--accent-gold);">
+                    <p style="color: var(--accent-gold); display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-star"></i>
+                        Vous êtes un utilisateur Premium ! Accédez à tous les thèmes et personnalisations exclusives.
+                    </p>
+                </div>
+
+                <!-- Thèmes -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-primary);">
+                        <i class="fas fa-palette" style="margin-right: 0.5rem; color: var(--primary-purple);"></i>
+                        Sélectionner un thème
+                    </h3>
+                    <div id="themesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem;"></div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- Icônes de profil -->
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-primary);">
+                        <i class="fas fa-icons" style="margin-right: 0.5rem; color: var(--primary-purple);"></i>
+                        Icône de profil
+                    </h3>
+                    <div id="iconsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 1rem;"></div>
+                </div>
+
+                <div class="form-divider"></div>
+
+
+
+                <!-- Couleurs unies du pseudo -->
+                <div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-primary);">
+                        <i class="fas fa-palette" style="margin-right: 0.5rem; color: var(--accent-gold);"></i>
+                        Couleur du pseudo
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem;">
+                        <i class="fas fa-info-circle"></i> Sélectionnez une couleur unie pour votre pseudo. La couleur s'appliquera automatiquement en jeu et sur le profil !
+                    </p>
+                    <div id="pseudoColorsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;"></div>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <!-- Dégradés de couleur du pseudo -->
+                <div>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--text-primary);">
+                        <i class="fas fa-rainbow" style="margin-right: 0.5rem; color: var(--accent-gold);"></i>
+                        Dégradé du pseudo
+                    </h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.95rem;">
+                        <i class="fas fa-info-circle"></i> Sélectionnez un dégradé de couleur pour votre pseudo. Le dégradé s'appliquera automatiquement en jeu et sur le profil !
+                    </p>
+                    <div id="pseudoGradientsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;"></div>
+                </div>
+            </div>
+
+            <!-- Section Premium non-accessible -->
+            <div class="profile-section" id="premiumUpgradeSection" style="display: none; background: rgba(251, 191, 36, 0.1); border: 2px solid var(--accent-gold);">
+                <div class="section-title">
+                    <i class="fas fa-star"></i>
+                    Débloquez les fonctionnalités Premium
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                    Les thèmes, icônes et personnalisations avancées sont disponibles pour les utilisateurs Premium.
+                </p>
+                <a href="premium.html" class="btn btn-primary">
+                    <i class="fas fa-crown btn-icon"></i>
+                    <span class="btn-text">Découvrir les offres Premium</span>
+                </a>
+            </div>
+
             <!-- Zone de danger -->
             <div class="profile-section danger-zone">
                 <div class="section-title">
@@ -513,6 +691,7 @@
 
     <!-- Scripts -->
     <script src="js/firebase.js"></script>
+    <script src="js/themes.js"></script>
     <script src="js/app.js"></script>
     <script src="js/profile.js"></script>
 </body>

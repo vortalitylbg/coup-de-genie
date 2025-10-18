@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium - Coup de génie</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #3b82f6;
+            --accent: #fbbf24;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .particles-bg {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            z-index: -1;
+            top: 0;
+            left: 0;
+        }
+
+        .particle {
+            position: fixed;
+            pointer-events: none;
+            animation: float-up 20s infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes float-up {
+            0% {
+                bottom: -10px;
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                bottom: 100vh;
+                opacity: 0;
+            }
+        }
+
+        /* Header */
+        .header {
+            padding: 1.5rem 2rem;
+            background: rgba(30, 27, 75, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo:hover {
+            color: var(--secondary);
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-connexion {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-connexion:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: slideDown 0.8s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.7);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Pricing Plans Section */
+        .pricing-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+            margin-top: 3rem;
+        }
+
+        .plan-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.05));
+            pointer-events: none;
+        }
+
+        .plan-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .plan-card.featured {
+            border-color: rgba(251, 191, 36, 0.5);
+            background: rgba(139, 92, 246, 0.2);
+            transform: scale(1.05);
+        }
+
+        .plan-card.featured .badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--accent), #fcd34d);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+        }
+
+        .plan-card:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            background: rgba(139, 92, 246, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .plan-card.featured:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(251, 191, 36, 0.2);
+        }
+
+        .plan-header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .plan-header h3 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+
+        .plan-header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-price .amount {
+            font-size: 2.75rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .plan-price .currency {
+            font-size: 1.25rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .plan-price .period {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .plan-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 1.5rem 0;
+        }
+
+        .plan-features {
+            flex: 1;
+            margin-bottom: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.95rem;
+        }
+
+        .feature-item i {
+            color: var(--accent);
+            font-size: 1.1rem;
+            min-width: 20px;
+        }
+
+        .feature-item.unavailable {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .feature-item.unavailable i {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .plan-action {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .plan-action .btn {
+            flex: 1;
+        }
+
+        /* Current Status */
+        .current-status {
+            background: rgba(16, 185, 129, 0.1);
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 3rem;
+            text-align: center;
+            animation: slideDown 0.8s ease;
+        }
+
+        .current-status h3 {
+            color: var(--success);
+            margin-bottom: 0.5rem;
+        }
+
+        .current-status p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+        }
+
+        .expiry-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .expiry-info .label {
+            color: rgba(255, 255, 255, 0.6);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .expiry-info .value {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Benefits Section */
+        #premiumBenefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .benefit-card {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-align: center;
+            animation: slideUp 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .benefit-card:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-10px);
+        }
+
+        .benefit-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .benefit-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        .benefit-card p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-large {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Alerts */
+        .alert {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1.25rem 1.75rem;
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.5);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            max-width: 400px;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            opacity: 0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert.show {
+            opacity: 1;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .alert i {
+            font-size: 1.25rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.25rem;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .container {
+                padding: 1rem;
+            }
+
+            .pricing-container {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .plan-card.featured {
+                transform: scale(1);
+            }
+
+            .plan-card.featured:hover {
+                transform: translateY(-5px);
+            }
+
+            .plan-card h3 {
+                font-size: 1.5rem;
+            }
+
+            .plan-price .amount {
+                font-size: 2.25rem;
+            }
+
+            .plan-features {
+                max-height: none;
+            }
+
+            #premiumBenefits {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .alert {
+                top: 1rem;
+                right: 1rem;
+                max-width: 90vw;
+            }
+
+            .benefit-card {
+                padding: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .plan-header h3 {
+                font-size: 1.5rem;
+            }
+
+            .plan-price .amount {
+                font-size: 2rem;
+            }
+
+            #premiumBenefits {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animation des benefit cards */
+        .benefit-card:nth-child(1) { animation-delay: 0s; }
+        .benefit-card:nth-child(2) { animation-delay: 0.1s; }
+        .benefit-card:nth-child(3) { animation-delay: 0.2s; }
+        .benefit-card:nth-child(4) { animation-delay: 0.3s; }
+        .benefit-card:nth-child(5) { animation-delay: 0.4s; }
+        .benefit-card:nth-child(6) { animation-delay: 0.5s; }
+        .benefit-card:nth-child(7) { animation-delay: 0.6s; }
+        .benefit-card:nth-child(8) { animation-delay: 0.7s; }
+        .benefit-card:nth-child(9) { animation-delay: 0.8s; }
+        .benefit-card:nth-child(10) { animation-delay: 0.9s; }
+
+        /* Themes Section */
+        #themesSection {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 2px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .themes-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .themes-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 3rem;
+            font-size: 1rem;
+        }
+
+        #themesGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .theme-card {
+            position: relative;
+            cursor: pointer;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            backdrop-filter: blur(10px);
+            height: 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            animation: slideUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .theme-card:nth-child(1) { animation-delay: 0.1s; }
+        .theme-card:nth-child(2) { animation-delay: 0.2s; }
+        .theme-card:nth-child(3) { animation-delay: 0.3s; }
+        .theme-card:nth-child(4) { animation-delay: 0.4s; }
+        .theme-card:nth-child(5) { animation-delay: 0.5s; }
+        .theme-card:nth-child(6) { animation-delay: 0.6s; }
+        .theme-card:nth-child(7) { animation-delay: 0.7s; }
+
+        .theme-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            border-radius: 16px;
+        }
+
+        .theme-card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Luxe Theme Card */
+        .theme-card.luxe {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(201, 169, 97, 0.08) 100%);
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .theme-card.luxe::before {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1410 50%, #2a1f1a 100%);
+            opacity: 0.3;
+        }
+
+        /* Cyberpunk Theme Card */
+        .theme-card.cyberpunk {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(255, 0, 110, 0.05) 100%);
+            border-color: rgba(0, 255, 136, 0.3);
+        }
+
+        .theme-card.cyberpunk::before {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a0033 50%, #0d1b2a 100%);
+            opacity: 0.3;
+        }
+
+        .theme-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.3);
+        }
+
+        .theme-card.luxe:hover {
+            border-color: rgba(212, 175, 55, 0.6);
+            box-shadow: 0 20px 40px rgba(212, 175, 55, 0.2);
+        }
+
+        .theme-card.cyberpunk:hover {
+            border-color: rgba(0, 255, 136, 0.5);
+            box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+        }
+
+        .theme-card.active {
+            border: 2px solid var(--accent);
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
+        }
+
+        .theme-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .theme-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .theme-description {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 1rem;
+            flex: 1;
+        }
+
+        .theme-tag {
+            display: inline-block;
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--accent);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid rgba(251, 191, 36, 0.4);
+        }
+
+        .theme-luxe-tag {
+            background: rgba(212, 175, 55, 0.2);
+            color: #d4af37;
+            border-color: rgba(212, 175, 55, 0.4);
+        }
+
+        .theme-cyber-tag {
+            background: rgba(0, 255, 136, 0.2);
+            color: #00ff88;
+            border-color: rgba(0, 255, 136, 0.4);
+        }
+
+        .theme-preview {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.15);
+            border-color: white;
+        }
+
+        .theme-card.selected {
+            background: rgba(251, 191, 36, 0.2);
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        .selected-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, var(--accent), #fcd34d);
+            color: #000;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: none;
+            z-index: 10;
+        }
+
+        .theme-card.active .selected-badge {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Particles background -->
+    <div id="particles" class="particles-bg"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="logo" onclick="window.location.href='index.html'">
+            <i class="fas fa-brain"></i>
+            <span>Coup de génie</span>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-connexion" id="btnConnexion">
+                <i class="fas fa-user"></i>
+                <span>Connexion</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <h1>🌟 Nos Offres</h1>
+            <p>Choisissez le plan qui vous convient et profitez de la meilleure expérience de jeu</p>
+        </section>
+
+        <!-- Pricing Plans -->
+        <div class="pricing-container" id="pricingPlans"></div>
+
+        <!-- Current Premium Status (shown if user is premium) -->
+        <div id="premiumStatus"></div>
+
+        <!-- Benefits Showcase -->
+        <section style="margin-top: 4rem;">
+            <h2 style="text-align: center; font-size: 2rem; margin-bottom: 3rem;">✨ Avantages Premium</h2>
+            <div id="premiumBenefits"></div>
+        </section>
+
+        <!-- Themes Showcase -->
+        <section id="themesSection" style="margin-top: 4rem; padding-top: 3rem; border-top: 2px solid rgba(139, 92, 246, 0.2);">
+            <h2 class="themes-title">🎨 Thèmes Premium Exclusifs</h2>
+            <p class="themes-subtitle">Choisissez parmi nos thèmes premium pour personnaliser complètement votre interface</p>
+            <div id="themesGrid"></div>
+        </section>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script src="js/firebase.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/premium.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

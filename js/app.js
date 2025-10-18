@@ -166,22 +166,8 @@ window.onAuthStateChanged = function(isLoggedIn, user, isAdminUser) {
         // User is logged in
         console.log('✅ Mise à jour UI - Utilisateur connecté:', user.email);
         
-        // Cloner le bouton pour supprimer tous les gestionnaires d'événements
-        const newBtn = btnConnexion.cloneNode(true);
-        btnConnexion.parentNode.replaceChild(newBtn, btnConnexion);
-        
-        // Mettre à jour le contenu
-        newBtn.innerHTML = `
-            <i class="fas fa-user-circle"></i>
-            <span>${user.displayName || user.email}</span>
-        `;
-        
-        // Ajouter le nouveau gestionnaire qui empêche la propagation
-        newBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showUserMenu(e);
-        });
+        // Charger les données de profil premium
+        loadAndDisplayUserProfile(user, btnConnexion);
         
         // Show admin link if user is admin
         if (isAdminUser) {
@@ -210,6 +196,86 @@ window.onAuthStateChanged = function(isLoggedIn, user, isAdminUser) {
         if (adminLink) {
             adminLink.remove();
         }
+    }
+}
+
+/**
+ * Charger et afficher le profil utilisateur avec son icône et couleur
+ */
+async function loadAndDisplayUserProfile(user, btnConnexion) {
+    try {
+        // Récupérer les données premium/profil
+        const premiumData = await getPremiumData(user.uid);
+        
+        // Cloner le bouton pour supprimer tous les gestionnaires d'événements
+        const newBtn = btnConnexion.cloneNode(true);
+        btnConnexion.parentNode.replaceChild(newBtn, btnConnexion);
+        
+        // Récupérer les infos de l'icône
+        let profileImageHTML = '';
+        const pseudoName = user.displayName || user.email;
+        
+        // Construire la couleur du pseudo
+        let pseudoColor = premiumData.profileColor || '#ffffff';
+        
+        // Appliquer la couleur du pseudo si disponible
+        if (premiumData.pseudoColor) {
+            pseudoColor = premiumData.pseudoColor;
+        }
+        
+        if (premiumData.profileIcon && PROFILE_ICONS && PROFILE_ICONS[premiumData.profileIcon]) {
+            const iconData = PROFILE_ICONS[premiumData.profileIcon];
+            
+            // Afficher l'image PNG au lieu de l'icône générique
+            profileImageHTML = `
+                <img src="${iconData.image}" alt="${pseudoName}" 
+                     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid ${iconData.color};">
+                <span style="color: ${pseudoColor};">${pseudoName}</span>
+            `;
+        } else {
+            // Fallback si pas d'icône profil
+            profileImageHTML = `
+                <i class="fas fa-user-circle"></i>
+                <span style="color: ${pseudoColor};">${pseudoName}</span>
+            `;
+        }
+        
+        // Mettre à jour le contenu du bouton
+        newBtn.innerHTML = profileImageHTML;
+        
+        // Ajouter le style pour afficher les éléments en flexbox
+        newBtn.style.display = 'flex';
+        newBtn.style.alignItems = 'center';
+        newBtn.style.gap = '0.75rem';
+        
+        // Ajouter le nouveau gestionnaire qui empêche la propagation
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showUserMenu(e);
+        });
+        
+        console.log('✅ Profil utilisateur chargé:', {
+            profileIcon: premiumData.profileIcon,
+            profileColor: premiumData.profileColor
+        });
+    } catch (error) {
+        console.error('❌ Erreur chargement profil utilisateur:', error);
+        
+        // Fallback : afficher un profil générique en cas d'erreur
+        const newBtn = btnConnexion.cloneNode(true);
+        btnConnexion.parentNode.replaceChild(newBtn, btnConnexion);
+        
+        newBtn.innerHTML = `
+            <i class="fas fa-user-circle"></i>
+            <span>${user.displayName || user.email}</span>
+        `;
+        
+        newBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showUserMenu(e);
+        });
     }
 }
 
@@ -253,6 +319,10 @@ function showUserMenu(event) {
             <button class="user-menu-item" onclick="window.location.href='profile.html'">
                 <i class="fas fa-user"></i>
                 <span>Mon profil</span>
+            </button>
+            <button class="user-menu-item" onclick="window.location.href='premium.html'">
+                <i class="fas fa-crown" style="color: #fbbf24;"></i>
+                <span>Premium</span>
             </button>
             <button class="user-menu-item" onclick="handleLogout()">
                 <i class="fas fa-sign-out-alt"></i>

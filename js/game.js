@@ -36,7 +36,8 @@ let gameState = {
     questions: [],
     startTime: null,
     questionTimes: [],
-    gameStarted: false
+    gameStarted: false,
+    isPremiumUser: false  // ✨ Nouveau : indiquer si l'utilisateur est premium
 };
 
 // Store for Firebase questions
@@ -48,6 +49,21 @@ let FIREBASE_QUESTIONS = [];
 document.addEventListener('DOMContentLoaded', async () => {
     // Load questions from Firebase
     await loadFirebaseQuestions();
+    
+    // ✨ Vérifier si l'utilisateur est premium
+    const user = await waitForAuthReady();
+    if (user) {
+        gameState.isPremiumUser = await isPremium(user.uid);
+        console.log('👑 Utilisateur premium:', gameState.isPremiumUser);
+        
+        // Masquer les publicités si l'utilisateur est premium
+        if (gameState.isPremiumUser) {
+            hidePremiumUserAds();
+        }
+        
+        // Charger le profil du joueur (icône + couleur du pseudo)
+        await loadPlayerProfile(user.uid);
+    }
     
     initCategoryModal();
     initParticles();
@@ -298,17 +314,18 @@ function handleAnswerClick(button) {
         
         const timeBonus = Math.floor(gameState.timeRemaining * CONFIG.bonusTimePoints);
         const points = CONFIG.pointsPerCorrectAnswer + timeBonus;
+        
         gameState.score += points;
         
         animateScore(points);
-        showFeedback(true, question.explanation, timeBonus);
+        showFeedback(true, question.explanation, timeBonus, false);
         
         // Lancer les confettis !
         launchConfetti();
     } else {
         button.classList.add('wrong');
         gameState.wrongAnswers++;
-        showFeedback(false, question.explanation);
+        showFeedback(false, question.explanation, 0, false);
     }
     
     setTimeout(() => {
@@ -316,7 +333,7 @@ function handleAnswerClick(button) {
     }, 1000);
 }
 
-function showFeedback(isCorrect, explanation, timeBonus = 0) {
+function showFeedback(isCorrect, explanation, timeBonus = 0, isPremium = false) {
     const feedbackElement = document.getElementById('answerFeedback');
     const iconElement = document.getElementById('feedbackIcon');
     const textElement = document.getElementById('feedbackText');
@@ -324,9 +341,16 @@ function showFeedback(isCorrect, explanation, timeBonus = 0) {
     
     if (isCorrect) {
         iconElement.className = 'fas fa-check feedback-icon correct';
+        
+        // ✨ AVANTAGE PREMIUM #2 : Message spécial pour les utilisateurs premium
+        let bonusText = '';
+        if (isPremium) {
+            bonusText = ' 👑 +20% Bonus Premium!';
+        }
+        
         textElement.textContent = timeBonus > 0 
-            ? `Excellent ! +${timeBonus} points bonus !` 
-            : 'Bonne réponse !';
+            ? `Excellent ! +${timeBonus} points bonus !${bonusText}` 
+            : `Bonne réponse !${bonusText}`;
         textElement.className = 'feedback-text correct';
     } else {
         iconElement.className = 'fas fa-times feedback-icon wrong';
@@ -614,6 +638,72 @@ function shuffleArray(array) {
         [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+}
+
+// ===========================
+// PLAYER PROFILE DISPLAY
+// ===========================
+
+/**
+ * Charger et afficher le profil du joueur en jeu (icône + couleur du pseudo)
+ */
+async function loadPlayerProfile(userId) {
+    try {
+        // Récupérer les données utilisateur
+        const result = await getUserData(userId);
+        if (!result.success) {
+            console.error('❌ Erreur chargement profil:', result.error);
+            return;
+        }
+        
+        const userData = result.user;
+        const displayNameElement = document.getElementById('playerDisplayName');
+        const profileIconElement = document.getElementById('playerProfileIcon');
+        
+        // Afficher le pseudo
+        if (displayNameElement && userData.displayName) {
+            displayNameElement.textContent = userData.displayName;
+            
+            // Appliquer la couleur du pseudo si elle existe (premium)
+            if (userData.profileColor) {
+                displayNameElement.style.color = userData.profileColor;
+            }
+        }
+        
+        // Afficher l'icône de profil si elle existe (premium)
+        if (userData.profileIcon && PROFILE_ICONS[userData.profileIcon]) {
+            const iconData = PROFILE_ICONS[userData.profileIcon];
+            if (iconData.image && profileIconElement) {
+                profileIconElement.src = iconData.image;
+                profileIconElement.style.borderColor = iconData.color;
+                console.log('✅ Profil du joueur chargé:', userData.displayName);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Erreur chargement profil joueur:', error);
+    }
+}
+
+// ===========================
+// PREMIUM FEATURES
+// ===========================
+
+/**
+ * ✨ AVANTAGE PREMIUM #3 : Masquer les publicités pour les utilisateurs premium
+ */
+function hidePremiumUserAds() {
+    console.log('🚫 Masquage des publicités pour l\'utilisateur premium...');
+    
+    // Masquer les éléments AdSense
+    const adsElements = document.querySelectorAll('.adsbygoogle, [data-ad-slot]');
+    adsElements.forEach(ad => {
+        ad.style.display = 'none';
+    });
+    
+    // Désactiver le script AdSense
+    if (window.adsbygoogle) {
+        window.adsbygoogle = [];
+    }
 }
 
 // ===========================

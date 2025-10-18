@@ -68,6 +68,15 @@
                     <i class="fas fa-database btn-icon"></i>
                     <span class="btn-text">Migrer les questions locales</span>
                 </button>
+                <button class="btn btn-secondary" id="btnExportQuestions">
+                    <i class="fas fa-download btn-icon"></i>
+                    <span class="btn-text">Exporter (CSV)</span>
+                </button>
+                <button class="btn btn-secondary" id="btnImportQuestions">
+                    <i class="fas fa-upload btn-icon"></i>
+                    <span class="btn-text">Importer (CSV)</span>
+                </button>
+                <input type="file" id="importFile" accept=".csv" style="display: none;">
             </div>
 
             <!-- Questions List -->
@@ -77,12 +86,15 @@
                         <i class="fas fa-list"></i>
                         Gestion des questions
                     </h2>
-                    <div class="filter-controls">
-                        <select class="filter-select" id="categoryFilter">
-                            <option value="">Toutes les catégories</option>
-                        </select>
+                </div>
+                <div class="filter-controls">
+                    <div class="search-box">
+                        <i class="fas fa-magnifying-glass"></i>
                         <input type="text" class="search-input" id="searchInput" placeholder="Rechercher une question...">
                     </div>
+                    <select class="filter-select" id="categoryFilter">
+                        <option value="">Toutes les catégories</option>
+                    </select>
                 </div>
                 
                 <div class="questions-list" id="questionsList">
@@ -95,7 +107,7 @@
     <!-- Add/Edit Question Modal -->
     <div class="modal" id="questionModal">
         <div class="modal-overlay" id="modalOverlay"></div>
-        <div class="modal-container">
+        <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title" id="modalTitle">
                     <i class="fas fa-plus"></i>
@@ -111,43 +123,43 @@
                     <input type="hidden" id="questionId">
                     
                     <div class="form-group">
-                        <label for="questionText">Question *</label>
-                        <textarea id="questionText" class="form-control" rows="3" required placeholder="Entrez votre question..."></textarea>
+                        <label for="questionText">Question <span class="required">*</span></label>
+                        <textarea id="questionText" rows="3" required placeholder="Entrez votre question..."></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label for="questionCategory">Catégorie *</label>
-                        <select id="questionCategory" class="form-control" required>
+                        <label for="questionCategory">Catégorie <span class="required">*</span></label>
+                        <select id="questionCategory" required>
                             <option value="">Sélectionnez une catégorie</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Réponses *</label>
+                        <label>Réponses <span class="required">*</span></label>
                         <div class="answers-inputs">
                             <div class="answer-input-group">
-                                <input type="text" class="form-control answer-input" id="answer0" required placeholder="Réponse A">
+                                <input type="text" class="answer-input" id="answer0" required placeholder="Réponse A">
                                 <label class="radio-label">
                                     <input type="radio" name="correctAnswer" value="0" required>
                                     <span>Correcte</span>
                                 </label>
                             </div>
                             <div class="answer-input-group">
-                                <input type="text" class="form-control answer-input" id="answer1" required placeholder="Réponse B">
+                                <input type="text" class="answer-input" id="answer1" required placeholder="Réponse B">
                                 <label class="radio-label">
                                     <input type="radio" name="correctAnswer" value="1" required>
                                     <span>Correcte</span>
                                 </label>
                             </div>
                             <div class="answer-input-group">
-                                <input type="text" class="form-control answer-input" id="answer2" required placeholder="Réponse C">
+                                <input type="text" class="answer-input" id="answer2" required placeholder="Réponse C">
                                 <label class="radio-label">
                                     <input type="radio" name="correctAnswer" value="2" required>
                                     <span>Correcte</span>
                                 </label>
                             </div>
                             <div class="answer-input-group">
-                                <input type="text" class="form-control answer-input" id="answer3" required placeholder="Réponse D">
+                                <input type="text" class="answer-input" id="answer3" required placeholder="Réponse D">
                                 <label class="radio-label">
                                     <input type="radio" name="correctAnswer" value="3" required>
                                     <span>Correcte</span>
@@ -157,8 +169,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="questionExplanation">Explication *</label>
-                        <textarea id="questionExplanation" class="form-control" rows="2" required placeholder="Expliquez la bonne réponse..."></textarea>
+                        <label for="questionExplanation">Explication <span class="required">*</span></label>
+                        <textarea id="questionExplanation" rows="2" required placeholder="Expliquez la bonne réponse..."></textarea>
                     </div>
                 </form>
             </div>
