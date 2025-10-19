@@ -220,7 +220,7 @@ function displayPricingPlans(isPremiumUser) {
                         Mon Profil
                     </button>
                 ` : `
-                    <button onclick="handlePremiumPurchase()" class="btn btn-primary">
+                    <button onclick="handlePremiumPurchase()" class="btn btn-primary checkout-button">
                         <i class="fas fa-credit-card"></i>
                         S'abonner
                     </button>

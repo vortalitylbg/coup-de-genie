@@ -1,0 +1,276 @@
+:root {
+    --legal-bg: rgba(15, 23, 42, 0.85);
+    --legal-border: rgba(124, 58, 237, 0.35);
+    --legal-border-strong: rgba(124, 58, 237, 0.6);
+    --legal-card: rgba(30, 27, 75, 0.75);
+    --legal-card-hover: rgba(30, 27, 75, 0.95);
+    --legal-shadow: 0 20px 60px rgba(15, 23, 42, 0.45);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 45%, var(--bg-navy) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.legal-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 20px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    position: relative;
+    z-index: 2;
+}
+
+.legal-nav {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid var(--legal-border);
+    padding: 12px 20px;
+    border-radius: 50px;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--legal-shadow);
+}
+
+.legal-nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 10px 18px;
+    border-radius: 30px;
+    transition: all var(--transition-normal);
+}
+
+.legal-nav a:hover,
+.legal-nav a[aria-current="page"] {
+    color: var(--text-primary);
+    background: rgba(124, 58, 237, 0.2);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+}
+
+.legal-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 20px 100px;
+    position: relative;
+    z-index: 1;
+}
+
+.legal-hero {
+    text-align: center;
+    padding: 60px 30px;
+    margin-bottom: 50px;
+    border-radius: 32px;
+    border: 1px solid var(--legal-border);
+    background: linear-gradient(145deg, rgba(30, 27, 75, 0.8), rgba(15, 23, 42, 0.8));
+    box-shadow: var(--legal-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: rgba(124, 58, 237, 0.15);
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+    border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.legal-hero h1 {
+    font-size: clamp(2.5rem, 5vw, 3.5rem);
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+}
+
+.legal-hero p {
+    max-width: 760px;
+    margin: 0 auto;
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.8;
+}
+
+.legal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 28px;
+    margin-bottom: 40px;
+}
+
+.legal-card {
+    background: var(--legal-card);
+    border: 1px solid var(--legal-border);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: var(--legal-shadow);
+    backdrop-filter: blur(12px);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.legal-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(59, 130, 246, 0.08));
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: none;
+}
+
+.legal-card:hover {
+    transform: translateY(-6px);
+    border-color: var(--legal-border-strong);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.6);
+}
+
+.legal-card:hover::before {
+    opacity: 1;
+}
+
+.legal-card h2 {
+    font-size: 1.4rem;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-primary);
+}
+
+.legal-card h2 i {
+    color: var(--accent-gold);
+    font-size: 1.4rem;
+}
+
+.legal-card ul {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    color: var(--text-secondary);
+    padding-left: 0;
+    margin: 0;
+}
+
+.legal-card ul li {
+    position: relative;
+    padding-left: 28px;
+    line-height: 1.6;
+}
+
+.legal-card ul li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-purple), var(--primary-blue));
+    box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);
+}
+
+.legal-card a {
+    color: var(--accent-gold);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(251, 191, 36, 0.5);
+    text-decoration-thickness: 2px;
+    transition: color var(--transition-fast);
+}
+
+.legal-card a:hover {
+    color: var(--accent-gold-light);
+}
+
+.legal-contact {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(124, 58, 237, 0.08));
+    border: 1px solid rgba(251, 191, 36, 0.35);
+    border-radius: 24px;
+    padding: 36px;
+    box-shadow: var(--legal-shadow);
+    margin-top: 60px;
+    text-align: center;
+}
+
+.legal-footer {
+    text-align: center;
+    margin-top: 80px;
+    padding: 40px 20px 60px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color var(--transition-fast);
+}
+
+.footer-links a:hover,
+.footer-links a[aria-current="page"] {
+    color: var(--accent-gold);
+}
+
+@media (max-width: 768px) {
+    .legal-header {
+        justify-content: center;
+    }
+
+    .legal-nav {
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 12px 16px;
+    }
+
+    .legal-card {
+        padding: 26px;
+    }
+
+    .legal-hero {
+        padding: 45px 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .legal-nav {
+        flex-direction: column;
+        gap: 10px;
+        border-radius: 20px;
+    }
+
+    .legal-card {
+        padding: 22px;
+    }
+
+    .legal-card h2 {
+        font-size: 1.2rem;
+    }
+
+    .legal-footer {
+        padding: 40px 20px 80px;
+    }
+}

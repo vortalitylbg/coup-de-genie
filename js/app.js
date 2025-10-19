@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initButtons();
     initStatsAnimation();
     addInteractiveEffects();
+    setFooterYear();
 });
 
 // ===========================
@@ -938,6 +939,18 @@ function createMiniConfetti() {
         
         animate();
     }
+}
+
+// ===========================
+// FOOTER YEAR SETTER
+// ===========================
+function setFooterYear() {
+    const footerYearElements = document.querySelectorAll('#footerYear, #currentYear');
+    const currentYear = new Date().getFullYear();
+    
+    footerYearElements.forEach(element => {
+        element.textContent = currentYear;
+    });
 }
 
 // ===========================

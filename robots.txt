@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /game.html
+Allow: /duel.html
+Allow: /profile.html
+Allow: /leaderboard.html
+Allow: /premium.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /legal.html
+Allow: /assets/
+Allow: /js/
+Disallow: /data/
+Disallow: *.json
+
+# Google AdSense
+User-agent: Googlebot
+Allow: /
+
+# Crawl-delay
+Crawl-delay: 1
+
+# Sitemap
+Sitemap: https://coupdegenie.site/sitemap.xml
+Sitemap: https://coupdegenie.site/sitemap-mobile.xml
