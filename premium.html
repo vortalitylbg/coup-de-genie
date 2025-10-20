@@ -766,6 +766,38 @@
         .theme-card.active .selected-badge {
             display: block;
         }
+
+        /* Banner temporaire */
+        .premium-banner {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(244, 114, 182, 0.15) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            backdrop-filter: blur(10px);
+            animation: slideDown 0.6s ease;
+        }
+
+        .premium-banner i {
+            font-size: 1.5rem;
+            color: #ef4444;
+            min-width: 24px;
+        }
+
+        .premium-banner-content h3 {
+            color: #ef4444;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+
+        .premium-banner-content p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95rem;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -793,6 +825,15 @@
             <h1>Nos Offres</h1>
             <p>Choisissez le plan qui vous convient et profitez de la meilleure expérience de jeu</p>
         </section>
+
+        <!-- Temporary Banner -->
+        <div class="premium-banner">
+            <i class="fas fa-info-circle"></i>
+            <div class="premium-banner-content">
+                <h3>ℹ️ Abonnement Premium Bientôt Disponible</h3>
+                <p>Pour le moment, l'abonnement premium ne peut pas être acheté. Nous travaillons actuellement à son intégration et il sera disponible très bientôt !</p>
+            </div>
+        </div>
 
         <!-- Pricing Plans -->
         <div class="pricing-container" id="pricingPlans"></div>
