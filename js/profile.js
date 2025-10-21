@@ -140,9 +140,12 @@ function displayProfileData(userData) {
     document.getElementById('gamesPlayedStat').textContent = userData.gamesPlayed || 0;
     document.getElementById('bestScoreStat').textContent = userData.bestScore || 0;
     document.getElementById('averageScoreStat').textContent = userData.averageScore || 0;
-    document.getElementById('eloStat').textContent = userData.elo || 1000;
+    document.getElementById('eloStat').textContent = userData.elo || 100;
     document.getElementById('duelsPlayedStat').textContent = userData.duelsPlayed || 0;
     document.getElementById('duelsWonStat').textContent = userData.duelsWon || 0;
+
+    // 🏅 Afficher le système de rang
+    displayRankInfo(userData);
 
     // Pré-remplir le champ du pseudo
     document.getElementById('newDisplayName').placeholder = userData.displayName || 'Votre nouveau pseudo';
@@ -162,6 +165,60 @@ async function displayPremiumBadge() {
         }
     } catch (error) {
         console.error('❌ Erreur affichage badge premium:', error);
+    }
+}
+
+/**
+ * 🏅 Afficher le système de rang compétitif
+ */
+function displayRankInfo(userData) {
+    try {
+        const elo = userData.elo || 100;
+        const rankData = calculateRankFromElo(elo);
+        
+        // Afficher le rang actuel
+        const rankIconElement = document.getElementById('currentRankIcon');
+        rankIconElement.innerHTML = `<img src="${getRankImagePath(rankData.rankName, rankData.phase)}" alt="${rankData.rankName}" style="width: 60px; height: 60px; object-fit: contain;">`;
+        document.getElementById('currentRankDisplay').textContent = rankData.label;
+        const phaseEloRange = rankData.phaseMaxElo - rankData.phaseMinElo + 1;
+        document.getElementById('rankProgress').textContent = `${rankData.eloInPhase} / ${phaseEloRange}`;
+        document.getElementById('rankProgressBar').style.width = rankData.progressPercent + '%';
+        document.getElementById('pointsToNextCount').textContent = rankData.eloToNextPhase;
+        
+        // Afficher les 3 phases du rang actuel
+        const rankSystem = RANK_SYSTEM.ranks.find(r => r.name === rankData.rankName);
+        if (rankSystem) {
+            for (let phase = 1; phase <= 3; phase++) {
+                const phaseId = `phase${phase}`;
+                const phaseCard = document.getElementById(phaseId);
+                const phaseLabel = document.getElementById(`${phaseId}Label`);
+                const phaseProgress = document.getElementById(`${phaseId}Progress`);
+                const phaseData = rankSystem.phases[phase];
+                
+                if (phaseCard && phaseData) {
+                    // Réinitialiser les classes
+                    phaseCard.classList.remove('current', 'completed');
+                    
+                    // Ajouter les classes appropriées
+                    if (rankData.phase === phase) {
+                        phaseCard.classList.add('current');
+                    } else if (rankData.phase > phase) {
+                        phaseCard.classList.add('completed');
+                    }
+                    
+                    // Mettre à jour l'affichage
+                    phaseLabel.textContent = phaseData.label;
+                    phaseProgress.textContent = `${phaseData.minElo}-${phaseData.maxElo} ELO`;
+                    
+                    // Mettre à jour l'image du rang avec le numéro de phase
+                    phaseCard.querySelector('div:first-child').innerHTML = `<img src="${getRankImagePath(rankSystem.name, phase)}" alt="${rankSystem.name}" style="width: 40px; height: 40px; object-fit: contain;">`;
+                }
+            }
+        }
+        
+        console.log('✅ Infos de rang affichées:', rankData.label);
+    } catch (error) {
+        console.error('❌ Erreur affichage rang:', error);
     }
 }
 
@@ -279,10 +336,10 @@ function createEloChart(userData) {
     if (!ctx) return;
     
     // Générer des données d'évolution ELO
-    const eloHistory = userData.eloHistory || [1000];
+    const eloHistory = userData.eloHistory || [100];
     // S'assurer qu'il y a au moins 2 points pour le graphique
     if (eloHistory.length === 1) {
-        eloHistory.push(userData.elo || 1000);
+        eloHistory.push(userData.elo || 100);
     }
     const labels = eloHistory.map((_, i) => i + 1);
     

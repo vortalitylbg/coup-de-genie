@@ -98,6 +98,54 @@
     color: var(--text-primary);
 }
 
+/* 🎯 TIMER STATES - Color coding based on time remaining */
+.timer-box.timer-normal {
+    border-color: var(--success);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+.timer-box.timer-normal .stat-value {
+    color: var(--success);
+}
+
+.timer-box.timer-warning {
+    border-color: var(--warning);
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.3);
+    animation: timerWarning 0.8s ease-in-out infinite;
+}
+
+.timer-box.timer-warning .stat-value {
+    color: var(--warning);
+}
+
+.timer-box.timer-critical {
+    border-color: var(--error);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    animation: timerCritical 0.5s ease-in-out infinite;
+}
+
+.timer-box.timer-critical .stat-value {
+    color: var(--error);
+}
+
+@keyframes timerWarning {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes timerCritical {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+}
+
 /* Profil du joueur en jeu */
 .player-profile {
     display: flex;

@@ -351,6 +351,42 @@
                 grid-template-columns: 1fr !important;
             }
         }
+
+        /* 🏅 RANK SYSTEM STYLES */
+        .rank-phase-card {
+            background: var(--bg-card);
+            transition: all var(--transition-normal);
+        }
+
+        .rank-phase-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary-purple);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(59, 130, 246, 0.15));
+        }
+
+        .rank-phase-card.current {
+            border-color: var(--primary-purple);
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2));
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .rank-phase-card.completed {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .rank-phase-card.completed::after {
+            content: '✅';
+            display: block;
+            margin-top: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 768px) {
+            #rankDisplayContainer [style*="grid-template-columns: repeat(3"] {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -460,6 +496,58 @@
                         <i class="fas fa-crown stat-card-icon" style="color: var(--success);"></i>
                         <div class="stat-card-value" id="duelsWonStat">0</div>
                         <div class="stat-card-label">Duels gagnés</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🏅 Section Rang Compétitif -->
+            <div class="profile-section" id="rankSection">
+                <div class="section-title">
+                    <i class="fas fa-trophy"></i>
+                    Votre Rang Compétitif
+                </div>
+
+                <div id="rankDisplayContainer" style="display: flex; flex-direction: column; gap: 2rem;">
+                    <!-- Rang actuel -->
+                    <div style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1)); padding: 2rem; border-radius: 16px; border: 2px solid var(--primary-purple); text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 0.5rem;" id="currentRankIcon">⚒️</div>
+                        <div style="font-size: 1.8rem; font-weight: 900; color: var(--accent-gold); margin-bottom: 0.5rem;" id="currentRankDisplay">Fer 1</div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+                            <span id="rankProgress">0 / 2000</span> points
+                        </div>
+
+                        <!-- Barre de progression -->
+                        <div style="width: 100%; height: 12px; background: rgba(124, 58, 237, 0.1); border-radius: 6px; overflow: hidden; margin-bottom: 0.5rem; border: 1px solid var(--border-color);">
+                            <div id="rankProgressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary-purple), var(--primary-blue)); width: 0%; border-radius: 6px; transition: width 0.3s ease;"></div>
+                        </div>
+
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;" id="pointsToNext">Points avant la phase suivante: <strong id="pointsToNextCount">2000</strong></div>
+                    </div>
+
+                    <!-- Les 3 phases du rang actuel -->
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <div id="phase1" class="rank-phase-card" data-phase="1" style="padding: 1.5rem; border-radius: 12px; border: 2px solid var(--border-color); text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚒️</div>
+                            <div style="font-weight: 700; color: var(--text-primary);" id="phase1Label">Fer 1</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;" id="phase1Progress">0-2000 pts</div>
+                        </div>
+                        <div id="phase2" class="rank-phase-card" data-phase="2" style="padding: 1.5rem; border-radius: 12px; border: 2px solid var(--border-color); text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚒️</div>
+                            <div style="font-weight: 700; color: var(--text-primary);" id="phase2Label">Fer 2</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;" id="phase2Progress">2000-4000 pts</div>
+                        </div>
+                        <div id="phase3" class="rank-phase-card" data-phase="3" style="padding: 1.5rem; border-radius: 12px; border: 2px solid var(--border-color); text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <div style="font-size: 2rem; margin-bottom: 0.5rem;">⚒️</div>
+                            <div style="font-weight: 700; color: var(--text-primary);" id="phase3Label">Fer 3</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;" id="phase3Progress">4000-6000 pts</div>
+                        </div>
+                    </div>
+
+                    <!-- Info supplémentaire -->
+                    <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 12px; border-left: 4px solid var(--primary-blue);">
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            <strong>💡 Comment progresser?</strong> Continuez à jouer des parties et accumulez des points pour passer à la phase suivante!
+                        </div>
                     </div>
                 </div>
             </div>
@@ -707,6 +795,7 @@
 
     <!-- Scripts -->
     <script src="js/firebase.js"></script>
+    <script src="js/rank-system.js"></script>
     <script src="js/themes.js"></script>
     <script src="js/app.js"></script>
     <script src="js/profile.js"></script>

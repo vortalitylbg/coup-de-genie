@@ -71,7 +71,7 @@ async function signUp(email, password, displayName) {
             gamesPlayed: 0,
             totalScore: 0,
             bestScore: 0,
-            elo: 1000,
+            elo: 100,
             duelsPlayed: 0,
             duelsWon: 0,
             duelsLost: 0,
@@ -94,7 +94,8 @@ async function signUp(email, password, displayName) {
             streakBest: 0,
             accuracyRate: 0,
             averageScore: 0,
-            eloHistory: [1000]
+            eloHistory: [100],
+            rankHistory: []
         });
         
         console.log('✅ Inscription réussie:', user.email);
@@ -126,7 +127,7 @@ async function signInWithGoogle() {
                 gamesPlayed: 0,
                 totalScore: 0,
                 bestScore: 0,
-                elo: 1000,
+                elo: 100,
                 duelsPlayed: 0,
                 duelsWon: 0,
                 duelsLost: 0,
@@ -149,7 +150,8 @@ async function signInWithGoogle() {
                 streakBest: 0,
                 accuracyRate: 0,
                 averageScore: 0,
-                eloHistory: [1000]
+                eloHistory: [100],
+                rankHistory: []
             });
         }
         
@@ -434,6 +436,9 @@ async function saveGameResult(gameData) {
                 bestScore: newBestScore,
                 lastPlayedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+            
+            // 🏅 Mettre à jour le rang de l'utilisateur
+            await updateUserRank(user.uid);
         }
         
         console.log('✅ Résultat sauvegardé');
@@ -466,7 +471,7 @@ async function getUserStats(userId) {
                 averageScore: userData.gamesPlayed > 0 
                     ? Math.round(userData.totalScore / userData.gamesPlayed) 
                     : 0,
-                elo: userData.elo || 1000,
+                elo: userData.elo || 100,
                 duelsPlayed: userData.duelsPlayed || 0,
                 duelsWon: userData.duelsWon || 0,
                 duelsLost: userData.duelsLost || 0
@@ -483,46 +488,67 @@ async function getUserStats(userId) {
 // ===========================
 
 /**
- * Calculer le changement d'ELO après un duel (basé sur le temps restant + ELO)
- * Plus le vainqueur a de temps restant, plus il gagne d'ELO
- * Plus un joueur a d'ELO, moins il gagne (et plus il perd)
+ * Calculer le changement d'ELO après un duel (système zéro-somme équilibré)
+ * Formule d'ELO standard avec multiplicateur de temps réduit
+ * 
+ * RÈGLES:
+ * - Gagnant contre joueur plus fort = plus d'ELO
+ * - Gagnant contre joueur plus faible = moins d'ELO
+ * - Plus de temps restant = légèrement plus d'ELO (1.0x à 1.15x)
+ * - Système zéro-somme: total des gains/pertes = 0
  */
-function calculateEloChange(winnerElo, loserElo, winnerTimeRemaining = 30) {
-    const K = 32; // Facteur K de base
+function calculateEloChange(winnerElo, loserElo, winnerTimeRemaining = 30, winnerScore = 0, loserScore = 0) {
+    const K = 32; // Facteur K standard
     
-    // ========== MULTIPLICATEUR 1: Basé sur le temps restant ==========
-    // 60s restant = x2.0, 30s = x1.5, 10s = x1.2, 0s = x1.0
-    const timeMultiplier = 1 + (winnerTimeRemaining / 60);
+    // ========== MULTIPLICATEUR: Basé sur le temps restant ==========
+    // 30s restant = x1.0 (neutre)
+    // 60s restant = x1.15 (bonus léger pour victoire rapide)
+    // Formule: 1.0 + (timeRemaining - 30) / 200
+    const timeMultiplier = Math.max(0.85, 1.0 + (Math.min(winnerTimeRemaining, 60) - 30) / 200);
     
-    // ========== MULTIPLICATEUR 2: Basé sur l'ELO du joueur ==========
-    // Système de réduction d'ELO pour les joueurs forts, augmentation pour les faibles
-    // À 1000 ELO (référence) = 1.0x
-    // À 1500 ELO = 0.7x (les pros gagnent moins)
-    // À 2000 ELO = 0.4x (les très pros gagnent beaucoup moins)
-    // À 500 ELO = 1.3x (les faibles gagnent plus)
+    // ========== MULTIPLICATEUR: Basé sur les scores (score-based ELO modifier) ==========
+    // Normaliser les scores (diviser par 1000 pour avoir des valeurs raisonnables)
+    // Score 800+ = beaucoup de points (bon performance)
+    // Score 400-800 = points moyens
+    // Score 0-400 = peu de points (mauvaise performance)
+    const winnerScoreNormalized = Math.min(winnerScore / 1000, 1.5); // Cap at 1.5
+    const loserScoreNormalized = Math.min(loserScore / 1000, 1.5);   // Cap at 1.5
     
-    const eloReferencePoint = 1000; // ELO de référence
-    const eloSensitivity = 0.0003; // Contrôle la force de l'effet ELO
+    // Le multiplicateur de score récompense les victoires avec beaucoup de points
+    // et punit les défaites avec peu de points
+    // Formule: 0.5 + (playerScore / 1000) * 1.0
+    // Min: 0.5 (si 0 points), Max: 2.0 (si 1500+ points)
+    const winnerScoreMultiplier = 0.5 + (winnerScoreNormalized * 1.0);
+    const loserScoreMultiplier = 0.5 + (loserScoreNormalized * 1.0);
     
-    // Multiplicateur pour le GAGNANT (réduit si ELO élevé)
-    const winnerEloMultiplier = Math.max(0.3, 1 - ((winnerElo - eloReferencePoint) * eloSensitivity));
-    
-    // Multiplicateur pour le PERDANT (augmenté si ELO élevé)
-    const loserEloMultiplier = Math.min(2, 1 + ((loserElo - eloReferencePoint) * eloSensitivity));
-    
-    // Appliquer les multiplicateurs
-    const winnerK = K * timeMultiplier * winnerEloMultiplier;
-    const loserK = K * timeMultiplier * loserEloMultiplier;
-    
+    // ========== PROBABILITÉ D'ELO ATTENDUE ==========
+    // Calcul standard ELO basé sur la différence d'ELO
     const expectedWinner = 1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
     const expectedLoser = 1 / (1 + Math.pow(10, (winnerElo - loserElo) / 400));
     
-    const winnerChange = Math.round(winnerK * (1 - expectedWinner));
-    const loserChange = Math.round(loserK * (0 - expectedLoser));
+    // ========== CALCUL FINAL (QUASI-ZÉRO-SOMME) ==========
+    // Combine tous les multiplicateurs
+    const baseWinnerChange = K * timeMultiplier * winnerScoreMultiplier * (1 - expectedWinner);
+    const baseLoserChange = K * timeMultiplier * loserScoreMultiplier * (expectedLoser - 1);
     
-    console.log('💰 ELO Change Breakdown:', {
-        winner: { elo: winnerElo, multiplier: winnerEloMultiplier.toFixed(2), K: winnerK.toFixed(2), change: winnerChange },
-        loser: { elo: loserElo, multiplier: loserEloMultiplier.toFixed(2), K: loserK.toFixed(2), change: loserChange }
+    // Arrondir et capper les valeurs
+    let winnerChange = Math.round(baseWinnerChange);
+    let loserChange = Math.round(baseLoserChange);
+    
+    // Capper les changements d'ELO pour éviter les extrêmes
+    // Win: entre +5 et +35 ELO
+    // Loss: entre -35 et -5 ELO
+    winnerChange = Math.max(5, Math.min(35, winnerChange));
+    loserChange = Math.max(-35, Math.min(-5, loserChange));
+    
+    console.log('💰 ELO Change Breakdown (with Score Modifier):', {
+        winner: { elo: winnerElo, score: winnerScore, eloGain: winnerChange },
+        loser: { elo: loserElo, score: loserScore, eloLoss: loserChange },
+        timeMultiplier: timeMultiplier.toFixed(3),
+        winnerScoreMultiplier: winnerScoreMultiplier.toFixed(3),
+        loserScoreMultiplier: loserScoreMultiplier.toFixed(3),
+        expectedWinnerProba: (expectedWinner * 100).toFixed(1) + '%',
+        totalChange: (winnerChange + loserChange)
     });
     
     return { winnerChange, loserChange };
@@ -551,7 +577,7 @@ async function createDuel(categories) {
         }
         
         const userData = userDoc.data();
-        const playerElo = userData.elo || 1000;
+        const playerElo = userData.elo || 100;
         console.log('✅ ELO du joueur:', playerElo);
         
         // Créer le duel
@@ -564,6 +590,7 @@ async function createDuel(categories) {
                 timeRemaining: 60, // 60 secondes par joueur
                 correctAnswers: 0,
                 wrongAnswers: 0,
+                score: 0, // Score basé sur les bonnes réponses (+100 par bonne réponse)
                 ready: false
             },
             player2: null,
@@ -609,7 +636,7 @@ async function joinDuel(categories) {
         }
         
         const userData = userDoc.data();
-        const playerElo = userData.elo || 1000;
+        const playerElo = userData.elo || 100;
         console.log('✅ ELO du joueur:', playerElo);
         
         // Chercher un duel en attente avec un ELO similaire (+/- 200)
@@ -660,6 +687,7 @@ async function joinDuel(categories) {
                 timeRemaining: 60, // 60 secondes par joueur
                 correctAnswers: 0,
                 wrongAnswers: 0,
+                score: 0, // Score basé sur les bonnes réponses (+100 par bonne réponse)
                 ready: false
             },
             status: 'ready',
@@ -855,14 +883,19 @@ async function finishDuel(duelId, winner = null) {
         
         const loser = winner === 1 ? 2 : 1;
         const winnerTime = duelData[`player${winner}`].timeRemaining || 0;
+        const winnerScore = duelData[`player${winner}`].score || 0;
+        const loserScore = duelData[`player${loser}`].score || 0;
         
-        console.log('🏆 Vainqueur:', winner, '| Temps restant:', winnerTime, 's');
+        console.log('🏆 Vainqueur:', winner, '| Temps restant:', winnerTime, 's | Score:', winnerScore);
+        console.log('🏆 Perdant:', loser, '| Score:', loserScore);
         
-        // Calculer les changements d'ELO basés sur le temps restant
+        // Calculer les changements d'ELO basés sur le temps restant ET les scores
         const eloChanges = calculateEloChange(
             duelData[`player${winner}`].elo,
             duelData[`player${loser}`].elo,
-            winnerTime
+            winnerTime,
+            winnerScore,
+            loserScore
         );
         
         console.log('📈 Changements d\'ELO calculés:', eloChanges);
@@ -883,7 +916,7 @@ async function finishDuel(duelId, winner = null) {
         console.log('✅ Joueur 1 trouvé - ELO actuel:', player1Data.elo);
         
         const player1EloChange = winner === 1 ? eloChanges.winnerChange : eloChanges.loserChange;
-        const player1NewElo = (player1Data.elo || 1000) + player1EloChange;
+        const player1NewElo = (player1Data.elo || 100) + player1EloChange;
         
         console.log('📊 Joueur 1 - Ancien ELO:', player1Data.elo, '| Changement:', player1EloChange, '| Nouveau ELO:', player1NewElo);
         
@@ -907,7 +940,7 @@ async function finishDuel(duelId, winner = null) {
         console.log('✅ Joueur 2 trouvé - ELO actuel:', player2Data.elo);
         
         const player2EloChange = winner === 2 ? eloChanges.winnerChange : eloChanges.loserChange;
-        const player2NewElo = (player2Data.elo || 1000) + player2EloChange;
+        const player2NewElo = (player2Data.elo || 100) + player2EloChange;
         
         console.log('📊 Joueur 2 - Ancien ELO:', player2Data.elo, '| Changement:', player2EloChange, '| Nouveau ELO:', player2NewElo);
         
@@ -936,6 +969,11 @@ async function finishDuel(duelId, winner = null) {
         await batch.commit();
         console.log('✅ Batch commit réussi !');
         console.log('🎉 ELO mis à jour - Joueur 1:', player1NewElo, '| Joueur 2:', player2NewElo);
+        
+        // Mettre à jour les rangs basés sur le nouvel ELO
+        console.log('🏅 Mise à jour des rangs...');
+        await updateUserRank(duelData.player1.uid);
+        await updateUserRank(duelData.player2.uid);
         
         console.log('✅ Duel terminé:', { 
             winner, 
@@ -984,7 +1022,7 @@ async function getLeaderboard(limit = 100) {
                 rank: index + 1,
                 uid: doc.id,
                 displayName: data.displayName || data.email,
-                elo: data.elo || 1000,
+                elo: data.elo || 100,
                 duelsPlayed: data.duelsPlayed || 0,
                 duelsWon: data.duelsWon || 0,
                 duelsLost: data.duelsLost || 0,
@@ -1013,7 +1051,7 @@ async function getPlayerRank(userId) {
         }
         
         const userData = userDoc.data();
-        const playerElo = userData.elo || 1000;
+        const playerElo = userData.elo || 100;
         
         // Compter combien de joueurs ont un ELO supérieur
         const snapshot = await db.collection('users')
@@ -1107,7 +1145,7 @@ async function getUserData(userId) {
                 uid: userId,
                 email: userData.email || '',
                 displayName: userData.displayName || '',
-                elo: userData.elo || 1000,
+                elo: userData.elo || 100,
                 createdAt: userData.createdAt,
                 ...stats.stats
             }
@@ -1488,6 +1526,40 @@ window.updateProfilePseudoColor = updateProfilePseudoColor;
 window.activatePremium = activatePremium;
 window.deactivatePremium = deactivatePremium;
 window.addAchievement = addAchievement;
+
+// ===========================
+// RANK SYSTEM - UPDATE RANK
+// ===========================
+
+/**
+ * Mettre à jour le rang de l'utilisateur basé sur son ELO
+ * Cette fonction est appelée après chaque duel
+ */
+async function updateUserRank(userId) {
+    try {
+        const userRef = db.collection('users').doc(userId);
+        const userDoc = await userRef.get();
+        
+        if (!userDoc.exists) {
+            throw new Error('Utilisateur non trouvé');
+        }
+        
+        const userData = userDoc.data();
+        const userElo = userData.elo || 100;
+        
+        // Calculer le nouveau rang basé sur l'ELO
+        const rankData = calculateRankFromElo(userElo);
+        
+        // Note: Le rang est calculé dynamiquement à partir de l'ELO
+        // Pas besoin de le stocker dans la DB
+        
+        console.log(`✅ Rang mis à jour: ${rankData.label} (${userElo} ELO)`);
+        return { success: true, rank: rankData };
+    } catch (error) {
+        console.error('❌ Erreur mise à jour rang:', error);
+        return { success: false, error: error.message };
+    }
+}
 
 console.log('🔥 Firebase initialisé avec succès');
 

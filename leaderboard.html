@@ -107,7 +107,7 @@
 
         .leaderboard-row {
             display: grid;
-            grid-template-columns: 80px 1fr 120px 120px 120px;
+            grid-template-columns: 80px 1fr 150px 120px 120px 120px;
             padding: 1rem 1.5rem;
             align-items: center;
             gap: 1rem;
@@ -153,6 +153,22 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+        }
+
+        .rank-badge-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        .rank-badge-cell-icon {
+            font-size: 1.2rem;
+        }
+
+        .rank-badge-cell-text {
+            font-size: 0.95rem;
         }
 
         .elo-cell {
@@ -227,11 +243,15 @@
 
         @media (max-width: 768px) {
             .leaderboard-row {
-                grid-template-columns: 60px 1fr 100px;
+                grid-template-columns: 60px 1fr 120px 100px;
                 font-size: 0.9rem;
             }
 
             .stat-cell.mobile-hidden {
+                display: none;
+            }
+
+            .rank-badge-cell-text {
                 display: none;
             }
 
@@ -268,6 +288,8 @@
     
     <!-- Firebase configuration and functions -->
     <script src="js/firebase.js"></script>
+    <!-- Rank System -->
+    <script src="js/rank-system.js"></script>
 
     <div class="container">
         <div class="leaderboard-container">
@@ -348,6 +370,7 @@
                 <div class="leaderboard-row header">
                     <div class="rank-cell">Rang</div>
                     <div class="player-name-cell">Joueur</div>
+                    <div class="rank-badge-cell">Compétitif</div>
                     <div class="elo-cell">ELO</div>
                     <div class="stat-cell mobile-hidden">Duels</div>
                     <div class="stat-cell mobile-hidden">Victoires</div>

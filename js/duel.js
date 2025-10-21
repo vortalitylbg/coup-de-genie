@@ -25,7 +25,16 @@ let duelState = {
     duelUnsubscribe: null,
     isAnswering: false, // Pour éviter les doubles clics
     penaltyTimeout: null, // Timeout pour la pénalité
-    lastTimerSync: Date.now() // Pour synchroniser le timer local
+    lastTimerSync: Date.now(), // Pour synchroniser le timer local
+    
+    // 🎮 Améliorations
+    comboP1: 0,
+    comboP2: 0,
+    maxComboP1: 0,
+    maxComboP2: 0,
+    answerStartTime: null, // Enregistrer le temps de début de question
+    player1Score: 0,
+    player2Score: 0
 };
 
 // ===========================
@@ -303,6 +312,7 @@ function handleDuelUpdate(snapshot) {
     }
     
     console.log('📊 Duel status:', duelData.status, '| Active player:', duelData.activePlayer);
+    console.log('📊 Real-time listener fired - Current scores - P1:', duelData.player1?.score, 'P2:', duelData.player2?.score);
     
     switch (duelData.status) {
         case 'waiting':
@@ -440,10 +450,17 @@ async function startGame() {
     console.log('🎮 Démarrage du jeu...');
     document.getElementById('gameContent').classList.remove('hidden');
     
-    // Cacher le timer global (on utilise les timers individuels sur les cartes)
+    // Montrer le timer global (affiche le temps du joueur actif)
     const timerBox = document.getElementById('timerBox');
     if (timerBox) {
-        timerBox.style.display = 'none';
+        console.log('✅ timerBox found:', timerBox);
+        console.log('📊 timerBox classList before:', timerBox.className);
+        console.log('📊 timerBox computed style display:', window.getComputedStyle(timerBox).display);
+        timerBox.style.display = 'flex';
+        console.log('📊 timerBox display set to flex');
+        console.log('📊 timerBox computed style display after:', window.getComputedStyle(timerBox).display);
+    } else {
+        console.error('❌ timerBox not found!');
     }
     
     // Charger les données du duel et afficher la première question
@@ -479,6 +496,9 @@ function loadQuestion(duelData) {
     }
     
     console.log('📝 Chargement de la question:', duelData.currentQuestionIndex + 1);
+    
+    // 🎯 Enregistrer le temps de début de question pour calculer la vitesse de réponse
+    duelState.answerStartTime = Date.now();
     
     // Mettre à jour l'interface
     document.getElementById('questionNumber').textContent = `Question ${duelData.currentQuestionIndex + 1}`;
@@ -528,19 +548,12 @@ function updatePlayerCards(duelData) {
     document.getElementById('player1NameGame').textContent = duelData.player1.displayName;
     document.getElementById('player1EloGame').textContent = duelData.player1.elo;
     
-    // Afficher le temps restant au lieu du score
+    // 🎯 Afficher le score depuis Firestore (mise à jour en temps réel)
     const player1ScoreElement = document.getElementById('player1Score');
-    const player1Time = Math.max(0, Math.floor(duelData.player1.timeRemaining || 0));
-    player1ScoreElement.textContent = `${player1Time}s`;
-    
-    // Changer la couleur selon le temps restant
-    if (player1Time <= 10) {
-        player1ScoreElement.style.color = 'var(--error)';
-    } else if (player1Time <= 30) {
-        player1ScoreElement.style.color = 'var(--warning)';
-    } else {
-        player1ScoreElement.style.color = 'var(--success)';
-    }
+    player1ScoreElement.textContent = duelData.player1.score || 0;
+    player1ScoreElement.style.color = 'var(--accent-gold)';
+    player1ScoreElement.style.fontSize = '2rem';
+    console.log(`📊 Player 1 score updated: ${duelData.player1.score || 0}`);
     
     // Player 2
     if (duelData.player2) {
@@ -548,18 +561,14 @@ function updatePlayerCards(duelData) {
         document.getElementById('player2NameGame').textContent = duelData.player2.displayName;
         document.getElementById('player2EloGame').textContent = duelData.player2.elo;
         
+        // 🎯 Afficher le score depuis Firestore (mise à jour en temps réel)
         const player2ScoreElement = document.getElementById('player2Score');
-        const player2Time = Math.max(0, Math.floor(duelData.player2.timeRemaining || 0));
-        player2ScoreElement.textContent = `${player2Time}s`;
-        
-        // Changer la couleur selon le temps restant
-        if (player2Time <= 10) {
-            player2ScoreElement.style.color = 'var(--error)';
-        } else if (player2Time <= 30) {
-            player2ScoreElement.style.color = 'var(--warning)';
-        } else {
-            player2ScoreElement.style.color = 'var(--success)';
-        }
+        player2ScoreElement.textContent = duelData.player2.score || 0;
+        player2ScoreElement.style.color = 'var(--accent-gold)';
+        player2ScoreElement.style.fontSize = '2rem';
+        console.log(`📊 Player 2 score updated: ${duelData.player2.score || 0} (Full player2 data:`, duelData.player2, ')');
+    } else {
+        console.warn('⚠️ player2 is null in duelData!', duelData);
     }
     
     // Mettre en évidence le joueur actif
@@ -630,33 +639,28 @@ function startTimer(initialDuelData) {
                 localTime[playerKey]--;
             }
             
-            // Mettre à jour l'affichage local immédiatement
-            const player1ScoreElement = document.getElementById('player1Score');
-            const player2ScoreElement = document.getElementById('player2Score');
+            // 🎯 Mettre à jour le timer dans le header (au lieu des éléments de score)
+            const timerValue = document.getElementById('timerValue');
+            const timerBox = document.getElementById('timerBox');
             
-            if (player1ScoreElement) {
-                player1ScoreElement.textContent = `${Math.max(0, Math.floor(localTime.player1))}s`;
+            if (timerValue && timerBox) {
+                // Afficher le timer du joueur actif
+                const activePlayerTime = currentActivePlayer === 1 ? localTime.player1 : localTime.player2;
+                timerValue.textContent = `${Math.max(0, Math.floor(activePlayerTime))}s`;
+                
                 // Changer la couleur selon le temps restant
-                if (localTime.player1 <= 10) {
-                    player1ScoreElement.style.color = 'var(--error)';
-                } else if (localTime.player1 <= 30) {
-                    player1ScoreElement.style.color = 'var(--warning)';
+                timerBox.classList.remove('timer-critical', 'timer-warning', 'timer-normal');
+                if (activePlayerTime <= 10) {
+                    timerBox.classList.add('timer-critical');
+                } else if (activePlayerTime <= 30) {
+                    timerBox.classList.add('timer-warning');
                 } else {
-                    player1ScoreElement.style.color = 'var(--success)';
+                    timerBox.classList.add('timer-normal');
                 }
             }
             
-            if (player2ScoreElement) {
-                player2ScoreElement.textContent = `${Math.max(0, Math.floor(localTime.player2))}s`;
-                // Changer la couleur selon le temps restant
-                if (localTime.player2 <= 10) {
-                    player2ScoreElement.style.color = 'var(--error)';
-                } else if (localTime.player2 <= 30) {
-                    player2ScoreElement.style.color = 'var(--warning)';
-                } else {
-                    player2ScoreElement.style.color = 'var(--success)';
-                }
-            }
+            // 🎯 Les éléments de score affichent maintenant les points (via updatePlayerCards)
+            // Ne pas les modifier ici!
             
             syncCounter++;
             
@@ -797,6 +801,43 @@ async function selectAnswer(selectedIndex) {
         feedbackText.textContent = '✅ Bonne réponse !';
         feedbackText.className = 'feedback-text correct';
         
+        // 🎯 AMÉLIORATIONS DUEL
+        // 1️⃣ Mettre à jour le combo
+        const playerNumber = duelState.playerNumber;
+        if (playerNumber === 1) {
+            duelState.comboP1++;
+            duelState.maxComboP1 = Math.max(duelState.maxComboP1, duelState.comboP1);
+            duelState.player1Score += 100;
+        } else {
+            duelState.comboP2++;
+            duelState.maxComboP2 = Math.max(duelState.maxComboP2, duelState.comboP2);
+            duelState.player2Score += 100;
+        }
+        
+        // 🔄 Synchroniser le score dans Firestore
+        syncScoreToFirestore(playerNumber, duelState[`player${playerNumber}Score`]);
+        
+        // 2️⃣ Afficher le combo si > 1
+        if (duelState[`comboP${playerNumber}`] > 1) {
+            showCombo(duelState[`comboP${playerNumber}`]);
+        }
+        
+        // 3️⃣ Afficher l'indicateur de vitesse
+        if (duelState.answerStartTime) {
+            const answerTimeMs = Date.now() - duelState.answerStartTime;
+            const answerTimeSeconds = (answerTimeMs / 1000).toFixed(2);
+            const playerCard = document.getElementById(`player${playerNumber}Card`);
+            addSpeedIndicator(playerCard, parseFloat(answerTimeSeconds));
+            recordAnswerTime(parseFloat(answerTimeSeconds));
+            console.log(`⚡ Temps de réponse P${playerNumber}: ${answerTimeSeconds}s`);
+        }
+        
+        // 4️⃣ Mettre à jour le score avec animation
+        const playerScoreElement = document.getElementById(`player${playerNumber}Score`);
+        if (playerScoreElement) {
+            updateScoreWithAnimation(document.getElementById(`player${playerNumber}Card`), duelState[`player${playerNumber}Score`]);
+        }
+        
         // Lancer les confettis !
         createConfetti();
         
@@ -824,6 +865,15 @@ async function selectAnswer(selectedIndex) {
         } else if (question) {
             feedbackExplanation.textContent = `Bonne réponse : ${question.answers[result.correctAnswer]}`;
         }
+        
+        // 🎯 AMÉLIORATIONS DUEL - Réinitialiser le combo
+        const playerNumber = duelState.playerNumber;
+        if (playerNumber === 1) {
+            duelState.comboP1 = 0;
+        } else {
+            duelState.comboP2 = 0;
+        }
+        console.log(`❌ Combo réinitialisé P${playerNumber}`);
         
         // Afficher la pénalité de 3 secondes
         showPenaltyCountdown();
@@ -864,6 +914,30 @@ async function showPenaltyCountdown() {
             duelState.isAnswering = false;
         }
     }, 1000);
+}
+
+// 🔄 Synchroniser le score à Firestore en temps réel
+async function syncScoreToFirestore(playerNumber, score) {
+    try {
+        if (!duelState.duelId) {
+            console.error(`❌ No duelId when syncing score for player ${playerNumber}`);
+            return;
+        }
+        
+        const updateData = {};
+        updateData[`player${playerNumber}.score`] = score;
+        
+        console.log(`🔄 Attempting to sync score for P${playerNumber}: ${score} to duel ${duelState.duelId}`);
+        await db.collection('duels').doc(duelState.duelId).update(updateData);
+        console.log(`✅ Score synchronisé P${playerNumber}: ${score}`);
+        
+        // Verify the update was written
+        const verification = await db.collection('duels').doc(duelState.duelId).get();
+        console.log(`📊 Verification - P${playerNumber} score in Firestore:`, verification.data()[`player${playerNumber}`]?.score);
+    } catch (error) {
+        console.error(`❌ Erreur synchronisation score P${playerNumber}:`, error);
+        console.error('Error details:', error.message, error.code);
+    }
 }
 
 // Fonction pour créer des confettis lors d'une bonne réponse

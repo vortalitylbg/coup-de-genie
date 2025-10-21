@@ -152,12 +152,19 @@ function displayLeaderboard(leaderboard, currentUserId) {
             rankIcon = '<i class="fas fa-medal"></i> ';
         }
         
+        // Calculer le rang compétitif basé sur l'ELO
+        const competitiveRank = calculateRankFromElo(player.elo);
+        
         row.innerHTML = `
             <div class="rank-cell ${rankClass}">${rankIcon}#${player.rank}</div>
             <div class="player-name-cell">
                 <i class="fas fa-user" style="color: var(--primary-purple);"></i>
                 <span>${player.displayName}</span>
                 ${player.uid === currentUserId ? '<span style="color: var(--accent-gold); font-size: 0.8rem; margin-left: 0.5rem;">(Vous)</span>' : ''}
+            </div>
+            <div class="rank-badge-cell">
+                <img src="${getRankImagePath(competitiveRank.rankName, competitiveRank.phase)}" alt="${competitiveRank.rankName}" class="rank-badge-image" style="width: 24px; height: 24px; object-fit: contain;">
+                <span class="rank-badge-cell-text">${competitiveRank.label}</span>
             </div>
             <div class="elo-cell">
                 <i class="fas fa-trophy" style="font-size: 0.9rem;"></i>
