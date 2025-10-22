@@ -223,9 +223,77 @@ function handleDuelClick() {
             console.warn('Firebase pas encore chargé, tentative de redirection...');
         }
         
+        // Afficher une modal avec lien vers les règles
+        showDuelRulesModal();
+    }, 150);
+}
+
+function showDuelRulesModal() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+    `;
+    
+    const content = document.createElement('div');
+    content.style.cssText = `
+        background: var(--bg-card);
+        border: 2px solid var(--primary-purple);
+        border-radius: 20px;
+        padding: 2rem;
+        max-width: 500px;
+        text-align: center;
+        animation: slideUp 0.3s ease-out;
+        color: var(--text-primary);
+    `;
+    
+    content.innerHTML = `
+        <h2 style="margin-bottom: 1rem; color: var(--primary-purple);">
+            <i class="fas fa-swords" style="margin-right: 0.5rem;"></i>
+            Prêt à relever le défi ?
+        </h2>
+        <p style="margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.6;">
+            Avant de lancer votre duel, assurez-vous de connaître les règles du jeu. 
+            Vous avez <strong>30 secondes</strong> pour répondre, les combos multiplient vos points, 
+            et une mauvaise réponse vous inflige une pénalité de 5 secondes.
+        </p>
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <a href="rules.html" class="btn btn-secondary" style="flex: 1; text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="fas fa-book" style="margin-right: 0.5rem;"></i>
+                Comment jouer ?
+            </a>
+            <button id="confirmDuel" class="btn btn-primary" style="flex: 1;">
+                <i class="fas fa-play" style="margin-right: 0.5rem;"></i>
+                Commencer !
+            </button>
+        </div>
+    `;
+    
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+    
+    // Bouton confirmer
+    document.getElementById('confirmDuel').addEventListener('click', () => {
+        modal.remove();
         console.log('Lancement du mode duel...');
         window.location.href = 'duel.html';
-    }, 150);
+    });
+    
+    // Fermer au clic sur le fond
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
 }
 
 function handleClassementClick() {

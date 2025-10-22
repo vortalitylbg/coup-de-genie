@@ -16,13 +16,9 @@ class ThemeManager {
     }
 
     init() {
-        // Charger le thème sauvegardé ou utiliser la préférence système
-        const savedTheme = this.getSavedTheme();
-        const preferredTheme = this.getSystemPreference();
-        const themeToApply = savedTheme || preferredTheme;
-
-        this.setTheme(themeToApply);
-        this.createThemeToggle();
+        // Forcer le thème sombre uniquement
+        this.setTheme(this.DARK_THEME);
+        // N'appelle pas createThemeToggle() pour retirer le bouton de switch
     }
 
     getSavedTheme() {

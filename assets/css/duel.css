@@ -179,13 +179,14 @@
 }
 
 .player-score {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: var(--primary-purple);
-    text-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-shadow: none;
     position: relative;
     z-index: 1;
     transition: all var(--transition-normal);
+    opacity: 0.7;
 }
 
 /* Animation du score qui augmente */
@@ -227,20 +228,22 @@
     }
 }
 
-/* Indicateur de combo */
+/* Indicateur de combo - DISCRET */
 .combo-indicator {
     position: absolute;
-    top: -10px;
-    right: -10px;
-    background: var(--accent-gold);
-    color: var(--bg-darker);
-    font-size: 0.85rem;
-    font-weight: 800;
-    padding: 0.3rem 0.6rem;
+    top: 5px;
+    right: 5px;
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--accent-gold);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.2rem 0.4rem;
     border-radius: 50px;
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
-    animation: comboPulse 0.8s ease-in-out infinite;
+    box-shadow: none;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    animation: none;
     z-index: 3;
+    opacity: 0.6;
 }
 
 @keyframes comboPulse {
@@ -249,6 +252,108 @@
     }
     50% {
         transform: scale(1.15);
+    }
+}
+
+/* ===========================
+   PLAYER CONTAINERS & TIMERS
+   =========================== */
+.player-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+}
+
+.player-timer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 2px solid var(--error);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    min-width: 120px;
+    justify-content: center;
+    animation: timerPulse 1.5s ease-in-out infinite;
+}
+
+.player-timer.active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(251, 191, 36, 0.1));
+    border: 3px solid var(--error);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.5), inset 0 0 15px rgba(239, 68, 68, 0.2);
+}
+
+.player-timer.inactive {
+    opacity: 0.5;
+    animation: none;
+}
+
+.player-timer .timer-icon {
+    font-size: 1.5rem;
+    color: var(--error);
+}
+
+.player-timer .timer-value {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: var(--error);
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+    min-width: 50px;
+    text-align: center;
+}
+
+@keyframes timerPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Time Penalty Overlay - Pénalité de temps au centre */
+.time-penalty-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+.time-penalty-overlay.hidden {
+    display: none;
+}
+
+.time-penalty-countdown {
+    font-size: 8rem;
+    font-weight: 900;
+    color: var(--error);
+    text-shadow: 0 0 50px rgba(239, 68, 68, 0.8);
+    animation: countdownPulse 1s ease-in-out;
+}
+
+@keyframes countdownPulse {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
     }
 }
 
@@ -994,6 +1099,23 @@
         gap: 1rem;
     }
     
+    .player-container {
+        gap: 0.5rem;
+    }
+    
+    .player-timer {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .player-timer .timer-icon {
+        font-size: 1.2rem;
+    }
+    
+    .player-timer .timer-value {
+        font-size: 1.4rem;
+    }
+    
     .player-card {
         min-width: 180px;
     }
@@ -1001,6 +1123,10 @@
     .vs-badge {
         font-size: 2rem;
         transform: rotate(90deg);
+    }
+    
+    .time-penalty-countdown {
+        font-size: 5rem;
     }
     
     .answers-grid {

@@ -37,10 +37,6 @@
             </div>
             
             <div class="game-stats">
-                <div class="stat-box timer-box" id="timerBox">
-                    <i class="fas fa-clock stat-icon"></i>
-                    <span class="stat-value" id="timerValue">30</span>
-                </div>
             </div>
         </header>
 
@@ -124,32 +120,44 @@
         <main class="game-content hidden" id="gameContent">
             <!-- Header des joueurs -->
             <div class="duel-header">
-                <div class="player-card current-player" id="player1Card">
-                    <div class="profile-wrapper-game" id="profileWrapper1Game">
-                        <img id="duelPlayer1GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
-                        <i id="duelPlayer1GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                <div class="player-container">
+                    <div class="player-timer" id="player1Timer">
+                        <i class="fas fa-clock timer-icon"></i>
+                        <span class="timer-value" id="player1TimerValue">30</span>
                     </div>
-                    <span class="player-name" id="player1NameGame">Vous</span>
-                    <span class="player-elo">
-                        <i class="fas fa-trophy"></i>
-                        <span id="player1EloGame">1000</span> ELO
-                    </span>
-                    <span class="player-score" id="player1Score">0</span>
+                    <div class="player-card current-player" id="player1Card">
+                        <div class="profile-wrapper-game" id="profileWrapper1Game">
+                            <img id="duelPlayer1GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
+                            <i id="duelPlayer1GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                        </div>
+                        <span class="player-name" id="player1NameGame">Vous</span>
+                        <span class="player-elo">
+                            <i class="fas fa-trophy"></i>
+                            <span id="player1EloGame">1000</span> ELO
+                        </span>
+                        <span class="player-score" id="player1Score">0</span>
+                    </div>
                 </div>
                 
                 <span class="vs-badge">VS</span>
                 
-                <div class="player-card" id="player2Card">
-                    <div class="profile-wrapper-game" id="profileWrapper2Game">
-                        <img id="duelPlayer2GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
-                        <i id="duelPlayer2GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                <div class="player-container">
+                    <div class="player-timer" id="player2Timer">
+                        <i class="fas fa-clock timer-icon"></i>
+                        <span class="timer-value" id="player2TimerValue">30</span>
                     </div>
-                    <span class="player-name" id="player2NameGame">Adversaire</span>
-                    <span class="player-elo">
-                        <i class="fas fa-trophy"></i>
-                        <span id="player2EloGame">1000</span> ELO
-                    </span>
-                    <span class="player-score" id="player2Score">0</span>
+                    <div class="player-card" id="player2Card">
+                        <div class="profile-wrapper-game" id="profileWrapper2Game">
+                            <img id="duelPlayer2GameIcon" src="" alt="Profil" class="profile-icon-game" style="display:none;">
+                            <i id="duelPlayer2GameCrown" class="fas fa-crown premium-crown" style="display:none;"></i>
+                        </div>
+                        <span class="player-name" id="player2NameGame">Adversaire</span>
+                        <span class="player-elo">
+                            <i class="fas fa-trophy"></i>
+                            <span id="player2EloGame">1000</span> ELO
+                        </span>
+                        <span class="player-score" id="player2Score">0</span>
+                    </div>
                 </div>
             </div>
 
@@ -206,9 +214,14 @@
                 <div class="penalty-content">
                     <i class="fas fa-times-circle penalty-icon"></i>
                     <h2 class="penalty-title">Mauvaise réponse !</h2>
-                    <div class="penalty-countdown" id="penaltyCountdown">3</div>
+                    <div class="penalty-countdown" id="penaltyCountdown">5</div>
                     <p class="penalty-text">Nouvelle question dans...</p>
                 </div>
+            </div>
+
+            <!-- Overlay de pénalité de temps (au centre avec compte à rebours) -->
+            <div class="time-penalty-overlay hidden" id="timePenaltyOverlay">
+                <div class="time-penalty-countdown" id="timePenaltyCountdown">5</div>
             </div>
 
             <!-- Bouton suivant -->

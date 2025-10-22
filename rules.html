@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Règles de Coup de génie - Découvrez comment jouer au quiz de culture générale">
+    <meta name="keywords" content="règles, guide, tutoriel, coup de génie, quiz">
+    <title>Règles - Coup de génie</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===========================
+           RULES PAGE STYLES
+           =========================== */
+
+        .rules-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .back-button {
+            margin-bottom: 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .rules-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .rules-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-purple), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .rules-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Section des règles */
+        .rules-section {
+            background: var(--bg-card);
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(20px);
+            transition: all var(--transition-normal);
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .rules-section:hover {
+            border-color: var(--primary-purple);
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title i {
+            color: var(--primary-purple);
+            font-size: 1.7rem;
+        }
+
+        .rule-item {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .rule-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 8px;
+            height: 8px;
+            background: var(--accent-gold);
+            border-radius: 50%;
+        }
+
+        .rule-item h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-purple);
+            margin-bottom: 0.5rem;
+        }
+
+        .rule-item p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Système de points */
+        .points-system {
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .points-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .points-table th {
+            background: var(--primary-purple);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .points-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .points-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .points-value {
+            color: var(--accent-gold);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* ELO System Info */
+        .elo-info {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .elo-info-title {
+            color: var(--accent-gold);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .elo-info-content {
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        /* Modes de jeu */
+        .game-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .game-mode-card {
+            background: rgba(124, 58, 237, 0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all var(--transition-normal);
+        }
+
+        .game-mode-card:hover {
+            border-color: var(--primary-purple);
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        .game-mode-card i {
+            font-size: 2rem;
+            color: var(--primary-purple);
+            margin-bottom: 1rem;
+        }
+
+        .game-mode-card h4 {
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .game-mode-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Tips */
+        .tips-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .tips-title {
+            color: var(--success);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .tip-item {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .tip-item::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        /* Footer */
+        .rules-footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .rules-container {
+                padding: 1rem;
+            }
+
+            .rules-title {
+                font-size: 2rem;
+            }
+
+            .rules-section {
+                padding: 1.5rem;
+            }
+
+            .game-modes {
+                grid-template-columns: 1fr;
+            }
+
+            .points-table {
+                font-size: 0.9rem;
+            }
+
+            .points-table th,
+            .points-table td {
+                padding: 0.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="rules-container">
+            <!-- Back button -->
+            <div class="back-button">
+                <a href="index.html" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left btn-icon"></i>
+                    <span class="btn-text">Retour à l'accueil</span>
+                </a>
+            </div>
+
+            <!-- Header -->
+            <div class="rules-header">
+                <h1 class="rules-title">
+                    <i class="fas fa-book" style="margin-right: 0.5rem;"></i>
+                    Règles du Jeu
+                </h1>
+                <p class="rules-subtitle">Apprenez comment maîtriser Coup de génie</p>
+            </div>
+
+            <!-- Objectif Section -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-target"></i>
+                    Objectif du Jeu
+                </h2>
+                <p style="color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem;">
+                    Bienvenue dans <strong>Coup de génie</strong> ! Testez vos connaissances en culture générale et affrontez d'autres joueurs dans des duels passionnants. 
+                    Répondez correctement aux questions pour marquer des points, constituer des combos et améliorer votre ranking !
+                </p>
+            </div>
+
+            <!-- Modes de jeu -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-gamepad"></i>
+                    Modes de Jeu
+                </h2>
+                
+                <div class="game-modes">
+                    <div class="game-mode-card">
+                        <i class="fas fa-play-circle"></i>
+                        <h4>Mode Solo</h4>
+                        <p>Jouez à votre rythme sans limite de temps. Parfait pour vous entraîner et améliorer vos connaissances !</p>
+                    </div>
+                    <div class="game-mode-card">
+                        <i class="fas fa-swords"></i>
+                        <h4>Mode Duel</h4>
+                        <p>Affrontez un adversaire en temps réel ! Chacun a 30 secondes pour répondre. Gagnez des points ELO et montez dans le classement !</p>
+                    </div>
+                    <div class="game-mode-card">
+                        <i class="fas fa-trophy"></i>
+                        <h4>Classement</h4>
+                        <p>Consultez votre position dans le classement mondial. Voyez vos statistiques, votre ELO et vos achievements !</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mécaniques du Mode Duel -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-swords"></i>
+                    Mécaniques du Mode Duel
+                </h2>
+
+                <div class="rule-item">
+                    <h3>⏱️ Le Système des Timers</h3>
+                    <p>
+                        Chaque joueur dispose de <strong>30 secondes</strong> pour répondre. Les timers sont affichés au-dessus de chaque carte joueur.
+                        Le joueur avec le plus bas ELO commence. Seul le timer du joueur actif compte à rebours. 
+                        Quand un joueur répond correctement, son timer se pause et le timer adverse s'active.
+                    </p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>La Pénalité de Temps</h3>
+                    <p>
+                        Quand vous répondez <strong>incorrectement</strong>, vous recevez une pénalité de <strong>5 secondes</strong> affichée au centre de l'écran. 
+                        Durant cette pénalité, vous ne pouvez pas répondre. Ensuite, vous êtes immédiatement présenté avec la question suivante.
+                    </p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>🏁 Fin du Duel</h3>
+                    <p>
+                        Le duel se termine quand l'un des deux joueurs voit son timer atteindre zéro. 
+                        Le joueur avec le plus de points remporte la victoire et gagne de l'ELO !
+                    </p>
+                </div>
+            </div>
+
+            <!-- Système de points -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-star"></i>
+                    Système de Points & Combos
+                </h2>
+
+                <div class="points-system">
+                    <h3 style="color: var(--primary-purple); margin-bottom: 1rem; font-weight: 700;">Points de Base</h3>
+                    <table class="points-table">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Points</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Bonne réponse</strong></td>
+                                <td class="points-value">+100</td>
+                                <td>Points de base pour une bonne réponse</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mauvaise réponse</strong></td>
+                                <td class="points-value">0</td>
+                                <td>Pas de points + pénalité de 5 sec</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="points-system">
+                    <h3 style="color: var(--primary-purple); margin-bottom: 1rem; font-weight: 700;">Système de Combos (Multiplicateur)</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem; line-height: 1.8;">
+                        Chaque bonne réponse successive augmente votre multiplicateur de points. Vos points sont <strong>multipliés par votre numéro de combo</strong> !
+                    </p>
+                    <table class="points-table">
+                        <thead>
+                            <tr>
+                                <th>Combo</th>
+                                <th>Multiplicateur</th>
+                                <th>Points Gagnés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Combo 1</strong></td>
+                                <td class="points-value">×1</td>
+                                <td>100 × 1 = <strong>100 points</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Combo 2</strong></td>
+                                <td class="points-value">×2</td>
+                                <td>100 × 2 = <strong>200 points</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Combo 3</strong></td>
+                                <td class="points-value">×3</td>
+                                <td>100 × 3 = <strong>300 points</strong></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Combo 5</strong></td>
+                                <td class="points-value">×5</td>
+                                <td>100 × 5 = <strong>500 points</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="color: var(--text-secondary); margin-top: 1rem; line-height: 1.8;">
+                        <strong>Attention !</strong> Une mauvaise réponse réinitialise votre combo à 0. 
+                        Maintenez votre combo pour maximiser vos points !
+                    </p>
+                </div>
+            </div>
+
+            <!-- Système ELO -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-chess"></i>
+                    Système ELO
+                </h2>
+
+                <div class="elo-info">
+                    <h3 class="elo-info-title">
+                        <i class="fas fa-trophy"></i>
+                        Qu'est-ce que l'ELO ?
+                    </h3>
+                    <div class="elo-info-content">
+                        <p style="margin-bottom: 1rem;">
+                            L'ELO est un système de classement utilisé dans les compétitions. Votre ELO augmente lorsque vous gagnez un duel 
+                            et diminue lorsque vous en perdez un. Plus votre ELO est élevé, plus votre niveau est considéré comme bon !
+                        </p>
+                        <p style="margin-bottom: 1rem; font-weight: 600;">
+                            <i class="fas fa-star" style="color: #fbbf24;"></i> <strong>Niveaux de Compétence :</strong><br>
+                            <strong>Débutant :</strong> 0-500 ELO<br>
+                            <strong>Intermédiaire :</strong> 500-1000 ELO<br>
+                            <strong>Compétent :</strong> 1000-1500 ELO<br>
+                            <strong>Expert :</strong> 1500-2000 ELO<br>
+                            <strong>Légende :</strong> 2000+ ELO
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comment jouer en Duel -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-play"></i>
+                    Pas à Pas : Jouer un Duel
+                </h2>
+
+                <div class="rule-item">
+                    <h3>1️Lancer la recherche</h3>
+                    <p>Cliquez sur "Mode Duel" depuis l'écran d'accueil pour lancer la recherche d'un adversaire.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>2️Adversaire trouvé !</h3>
+                    <p>Une fois un adversaire de niveau similaire trouvé, voyez son profil et son ELO.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>3️Être prêt</h3>
+                    <p>Cliquez sur "Je suis prêt !" quand vous êtes préparé. Attendez que votre adversaire fasse de même.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>4️Compte à rebours</h3>
+                    <p>Un compte à rebours de 3 secondes s'affiche avant le début du duel.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>5️C'est parti !</h3>
+                    <p>
+                        Le joueur avec le plus bas ELO commence. Son timer compte à rebours tandis que l'autre est en pause. 
+                        Répondez aussi vite que possible aux questions !
+                    </p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>6️Résultats</h3>
+                    <p>
+                        Quand le timer d'un joueur atteint 0, le duel se termine. Consultez le classement final et votre changement d'ELO.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Conseils -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Conseils & Astuces pour Gagner
+                </h2>
+
+                <div class="tips-section">
+                    <h3 class="tips-title">
+                        <i class="fas fa-rocket"></i>
+                        Stratégies Gagnantes
+                    </h3>
+
+                    <div class="tip-item">
+                        <strong>Entraînez-vous en Mode Solo</strong> : Améliorez vos connaissances sans pression avant d'affronter des adversaires.
+                    </div>
+
+                    <div class="tip-item">
+                        <strong>Gérez votre temps en Duel</strong> : 30 secondes, c'est limité ! Prenez des décisions rapides mais réfléchies.
+                    </div>
+
+                    <div class="tip-item">
+                        <strong>Maintenez les combos !</strong> : Les combos multiplient vos points. Évitez les mauvaises réponses pour garder votre multiplicateur.
+                    </div>
+
+                    <div class="tip-item">
+                        <strong>Adaptez-vous à votre adversaire</strong> : Si vous êtes en retard sur les points, misez sur le temps restant pour gagner.
+                    </div>
+
+                    <div class="tip-item">
+                        <strong>Connaissez vos forces</strong> : Sélectionnez les catégories où vous êtes fort en phase de préparation.
+                    </div>
+
+                    <div class="tip-item">
+                        <strong>Consultez le classement</strong> : Suivez vos progrès et comparez-vous aux autres pour mesurer votre progression.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Questions fréquentes -->
+            <div class="rules-section">
+                <h2 class="section-title">
+                    <i class="fas fa-question-circle"></i>
+                    Questions Fréquentes
+                </h2>
+
+                <div class="rule-item">
+                    <h3>Que se passe-t-il si je perds ma connexion pendant un duel ?</h3>
+                    <p>Si vous vous déconnectez, vous serez considéré comme forfait et perdrez le duel avec une perte d'ELO.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>Combien de temps dure un duel ?</h3>
+                    <p>Un duel dure jusqu'à ce que l'un des deux joueurs voit son timer atteindre zéro (30 secondes initial). En général, 5-10 minutes.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>Puis-je jouer plusieurs duels d'affilée ?</h3>
+                    <p>Bien sûr ! Vous pouvez jouer autant de duels que vous le souhaitez. Chaque duel est une nouvelle occasion de gagner de l'ELO.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>Comment fonctionne l'appairage des adversaires ?</h3>
+                    <p>Le système cherche les meilleurs adversaires selon votre ELO. Plus votre ELO est proche, meilleur sera l'appairage.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>Les questions sont-elles les mêmes pour tous ?</h3>
+                    <p>Non ! Les questions sont tirées aléatoirement de notre base de données. Chaque duel offre de nouvelles questions.</p>
+                </div>
+
+                <div class="rule-item">
+                    <h3>Quelle est la limite d'ELO maximum ?</h3>
+                    <p>Il n'y a pas de limite théorique ! Continuez à gagner pour devenir une légende du classement.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="rules-footer">
+                <p>
+                    Vous avez d'autres questions ? 
+                    <a href="mailto:contact@unpixelpres.fr" style="color: var(--primary-purple); text-decoration: none;">Contactez-nous</a> !
+                </p>
+                <p style="margin-top: 1rem; font-size: 0.95rem;">
+                    Bonne chance et amusez-vous bien avec Coup de génie !
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/enhancements.js"></script>
+</body>
+</html>

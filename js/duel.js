@@ -2,8 +2,8 @@
 // CONFIGURATION & CONSTANTS
 // ===========================
 const CONFIG = {
-    initialTime: 60, // 60 secondes par joueur
-    penaltyDuration: 3, // 3 secondes de pénalité
+    initialTime: 30, // 30 secondes par joueur
+    penaltyDuration: 5, // 5 secondes de pénalité
     maxCategorySelection: 5
 };
 
@@ -34,7 +34,13 @@ let duelState = {
     maxComboP2: 0,
     answerStartTime: null, // Enregistrer le temps de début de question
     player1Score: 0,
-    player2Score: 0
+    player2Score: 0,
+    
+    // ⏱️ Timers indépendants
+    player1TimeRemaining: 30,
+    player2TimeRemaining: 30,
+    timePenaltyInterval: null,
+    isPenaltyActive: false
 };
 
 // ===========================
@@ -450,19 +456,6 @@ async function startGame() {
     console.log('🎮 Démarrage du jeu...');
     document.getElementById('gameContent').classList.remove('hidden');
     
-    // Montrer le timer global (affiche le temps du joueur actif)
-    const timerBox = document.getElementById('timerBox');
-    if (timerBox) {
-        console.log('✅ timerBox found:', timerBox);
-        console.log('📊 timerBox classList before:', timerBox.className);
-        console.log('📊 timerBox computed style display:', window.getComputedStyle(timerBox).display);
-        timerBox.style.display = 'flex';
-        console.log('📊 timerBox display set to flex');
-        console.log('📊 timerBox computed style display after:', window.getComputedStyle(timerBox).display);
-    } else {
-        console.error('❌ timerBox not found!');
-    }
-    
     // Charger les données du duel et afficher la première question
     try {
         const duelDoc = await db.collection('duels').doc(duelState.duelId).get();
@@ -589,25 +582,23 @@ function updatePlayerCards(duelData) {
     }
 }
 
-// Nouveau système de timer : met à jour le temps du joueur actif
+// Nouveau système de timer : gère 2 timers indépendants
 function startTimer(initialDuelData) {
     if (duelState.timerInterval) {
         clearInterval(duelState.timerInterval);
     }
     
-    console.log('⏱️ Démarrage du timer');
+    console.log('⏱️ Démarrage des timers (2 joueurs indépendants)');
     
-    // Variables locales pour le timer
-    let localTime = {
-        player1: initialDuelData.player1.timeRemaining || 60,
-        player2: initialDuelData.player2.timeRemaining || 60
-    };
+    // Initialiser les temps locaux
+    duelState.player1TimeRemaining = initialDuelData.player1.timeRemaining || 30;
+    duelState.player2TimeRemaining = initialDuelData.player2.timeRemaining || 30;
     let currentActivePlayer = initialDuelData.activePlayer;
     let syncCounter = 0;
     
     duelState.timerInterval = setInterval(async () => {
         try {
-            // Récupérer les données actuelles pour vérifier le joueur actif
+            // Récupérer les données actuelles
             const duelDoc = await db.collection('duels').doc(duelState.duelId).get();
             if (!duelDoc.exists) {
                 clearInterval(duelState.timerInterval);
@@ -622,83 +613,56 @@ function startTimer(initialDuelData) {
                 return;
             }
             
-            // Mettre à jour le joueur actif si changé
+            // Gérer le changement de joueur actif
             if (currentDuelData.activePlayer !== currentActivePlayer) {
                 console.log(`🔄 Changement de joueur actif: ${currentActivePlayer} → ${currentDuelData.activePlayer}`);
                 currentActivePlayer = currentDuelData.activePlayer;
                 
                 // Synchroniser les temps avec le serveur
-                localTime.player1 = currentDuelData.player1.timeRemaining || 0;
-                localTime.player2 = currentDuelData.player2.timeRemaining || 0;
+                duelState.player1TimeRemaining = currentDuelData.player1.timeRemaining || 0;
+                duelState.player2TimeRemaining = currentDuelData.player2.timeRemaining || 0;
             }
             
-            // Décrémenter le temps du joueur actif localement
-            const playerKey = `player${currentActivePlayer}`;
-            
-            if (localTime[playerKey] > 0) {
-                localTime[playerKey]--;
+            // Décrémenter UNIQUEMENT le temps du joueur actif
+            if (currentActivePlayer === 1 && duelState.player1TimeRemaining > 0) {
+                duelState.player1TimeRemaining--;
+            } else if (currentActivePlayer === 2 && duelState.player2TimeRemaining > 0) {
+                duelState.player2TimeRemaining--;
             }
             
-            // 🎯 Mettre à jour le timer dans le header (au lieu des éléments de score)
-            const timerValue = document.getElementById('timerValue');
-            const timerBox = document.getElementById('timerBox');
-            
-            if (timerValue && timerBox) {
-                // Afficher le timer du joueur actif
-                const activePlayerTime = currentActivePlayer === 1 ? localTime.player1 : localTime.player2;
-                timerValue.textContent = `${Math.max(0, Math.floor(activePlayerTime))}s`;
-                
-                // Changer la couleur selon le temps restant
-                timerBox.classList.remove('timer-critical', 'timer-warning', 'timer-normal');
-                if (activePlayerTime <= 10) {
-                    timerBox.classList.add('timer-critical');
-                } else if (activePlayerTime <= 30) {
-                    timerBox.classList.add('timer-warning');
-                } else {
-                    timerBox.classList.add('timer-normal');
-                }
-            }
-            
-            // 🎯 Les éléments de score affichent maintenant les points (via updatePlayerCards)
-            // Ne pas les modifier ici!
+            // 📍 Mettre à jour les affichages des timers
+            updateTimersDisplay(currentActivePlayer);
             
             syncCounter++;
             
-            // Synchroniser avec Firestore toutes les 3 secondes (au lieu de chaque seconde)
+            // Synchroniser avec Firestore toutes les 3 secondes
             if (syncCounter >= 3) {
                 syncCounter = 0;
                 
-                // Vérifier si le joueur actif est le joueur local
                 const user = getCurrentUser();
                 const isPlayer1 = currentDuelData.player1.uid === user.uid;
                 const isMyTurn = (currentActivePlayer === 1 && isPlayer1) || (currentActivePlayer === 2 && !isPlayer1);
                 
-                // Seul le joueur actif met à jour le timer sur Firestore
                 if (isMyTurn) {
-                    await updatePlayerTime(duelState.duelId, currentActivePlayer, localTime[playerKey]);
-                    console.log(`⏱️ Sync timer: Player ${currentActivePlayer} = ${localTime[playerKey]}s`);
+                    const timeToUpdate = currentActivePlayer === 1 ? duelState.player1TimeRemaining : duelState.player2TimeRemaining;
+                    await updatePlayerTime(duelState.duelId, currentActivePlayer, timeToUpdate);
+                    console.log(`⏱️ Sync timer: Player ${currentActivePlayer} = ${timeToUpdate}s`);
                 }
             }
             
-            // Vérifier si le temps est écoulé pour l'un des joueurs
-            if (localTime['player1'] <= 0) {
+            // Vérifier si le temps est écoulé
+            if (duelState.player1TimeRemaining <= 0) {
                 console.log('⏱️ Temps écoulé pour le joueur 1 - Joueur 2 gagne !');
                 clearInterval(duelState.timerInterval);
                 duelState.timerInterval = null;
-                
-                // N'importe quel joueur peut terminer le duel (protection contre double appel dans finishDuel)
-                console.log('🏁 Fin du duel - Victoire du joueur 2');
                 await finishDuel(duelState.duelId, 2);
                 return;
             }
             
-            if (localTime['player2'] <= 0) {
+            if (duelState.player2TimeRemaining <= 0) {
                 console.log('⏱️ Temps écoulé pour le joueur 2 - Joueur 1 gagne !');
                 clearInterval(duelState.timerInterval);
                 duelState.timerInterval = null;
-                
-                // N'importe quel joueur peut terminer le duel (protection contre double appel dans finishDuel)
-                console.log('🏁 Fin du duel - Victoire du joueur 1');
                 await finishDuel(duelState.duelId, 1);
                 return;
             }
@@ -707,6 +671,31 @@ function startTimer(initialDuelData) {
             console.error('❌ Erreur timer:', error);
         }
     }, 1000);
+}
+
+// Mettre à jour l'affichage des 2 timers
+function updateTimersDisplay(activePlayer) {
+    const player1Timer = document.getElementById('player1TimerValue');
+    const player2Timer = document.getElementById('player2TimerValue');
+    const player1TimerBox = document.getElementById('player1Timer');
+    const player2TimerBox = document.getElementById('player2Timer');
+    
+    if (player1Timer) {
+        player1Timer.textContent = Math.max(0, Math.floor(duelState.player1TimeRemaining));
+    }
+    
+    if (player2Timer) {
+        player2Timer.textContent = Math.max(0, Math.floor(duelState.player2TimeRemaining));
+    }
+    
+    // Mettre en évidence le timer du joueur actif
+    if (player1TimerBox && player2TimerBox) {
+        player1TimerBox.classList.toggle('active', activePlayer === 1);
+        player1TimerBox.classList.toggle('inactive', activePlayer === 2);
+        
+        player2TimerBox.classList.toggle('active', activePlayer === 2);
+        player2TimerBox.classList.toggle('inactive', activePlayer === 1);
+    }
 }
 
 function stopTimer() {
@@ -807,11 +796,15 @@ async function selectAnswer(selectedIndex) {
         if (playerNumber === 1) {
             duelState.comboP1++;
             duelState.maxComboP1 = Math.max(duelState.maxComboP1, duelState.comboP1);
-            duelState.player1Score += 100;
+            // 🔥 Appliquer le coefficient multiplicateur au combo
+            const pointsWithCombo = 100 * duelState.comboP1;
+            duelState.player1Score += pointsWithCombo;
         } else {
             duelState.comboP2++;
             duelState.maxComboP2 = Math.max(duelState.maxComboP2, duelState.comboP2);
-            duelState.player2Score += 100;
+            // 🔥 Appliquer le coefficient multiplicateur au combo
+            const pointsWithCombo = 100 * duelState.comboP2;
+            duelState.player2Score += pointsWithCombo;
         }
         
         // 🔄 Synchroniser le score dans Firestore
@@ -880,7 +873,7 @@ async function selectAnswer(selectedIndex) {
     }
 }
 
-// Afficher le compte à rebours de pénalité (3 secondes)
+// Afficher le compte à rebours de pénalité (5 secondes)
 async function showPenaltyCountdown() {
     let penaltyTime = CONFIG.penaltyDuration;
     
@@ -888,22 +881,26 @@ async function showPenaltyCountdown() {
     const feedback = document.getElementById('answerFeedback');
     feedback.classList.remove('show', 'wrong');
     
-    // Afficher l'overlay de pénalité
-    const penaltyOverlay = document.getElementById('penaltyOverlay');
-    const penaltyCountdown = document.getElementById('penaltyCountdown');
+    // 🎯 Afficher l'overlay de pénalité de temps au centre (gros chiffres)
+    const timePenaltyOverlay = document.getElementById('timePenaltyOverlay');
+    const timePenaltyCountdown = document.getElementById('timePenaltyCountdown');
     
-    penaltyOverlay.classList.remove('hidden');
-    penaltyCountdown.textContent = penaltyTime;
+    timePenaltyOverlay.classList.remove('hidden');
+    timePenaltyCountdown.textContent = penaltyTime;
+    
+    // Marquer que la pénalité de temps est active
+    duelState.isPenaltyActive = true;
     
     const penaltyInterval = setInterval(async () => {
         penaltyTime--;
         
         if (penaltyTime > 0) {
-            penaltyCountdown.textContent = penaltyTime;
+            timePenaltyCountdown.textContent = penaltyTime;
         } else {
             clearInterval(penaltyInterval);
-            penaltyOverlay.classList.add('hidden');
+            timePenaltyOverlay.classList.add('hidden');
             document.getElementById('feedbackExplanation').textContent = '';
+            duelState.isPenaltyActive = false;
             
             // Charger la nouvelle question après la pénalité
             const doc = await db.collection('duels').doc(duelState.duelId).get();

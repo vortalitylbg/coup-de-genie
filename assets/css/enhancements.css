@@ -43,45 +43,11 @@ body, .container, .header, .btn, .card, .stat-box, .player-card {
 }
 
 /* ===========================
-   THEME TOGGLE BUTTON
+   THEME TOGGLE BUTTON - HIDDEN
+   Mode sombre uniquement
    =========================== */
 .theme-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    background: var(--bg-card);
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-    font-size: 1.5rem;
-    color: var(--accent-gold);
-    backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-sm);
-}
-
-.theme-toggle:hover {
-    transform: scale(1.1) rotate(20deg);
-    box-shadow: var(--shadow-md);
-    border-color: var(--primary-purple);
-}
-
-.theme-toggle:active {
-    transform: scale(0.95);
-}
-
-.theme-toggle.light-mode {
-    color: var(--accent-gold);
-}
-
-.theme-toggle.dark-mode {
-    color: var(--primary-blue);
+    display: none !important;
 }
 
 /* ===========================
