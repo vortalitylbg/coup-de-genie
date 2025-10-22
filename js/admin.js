@@ -33,15 +33,16 @@ window.onAuthStateChanged = function(isLoggedIn, user, isAdminUser) {
 function initEventListeners() {
     document.getElementById('btnLogout').addEventListener('click', handleLogout);
     document.getElementById('btnAddQuestion').addEventListener('click', () => openQuestionModal());
-    document.getElementById('btnMigrateQuestions').addEventListener('click', handleMigration);
+    document.getElementById('btnScanDuplicates').addEventListener('click', handleScanDuplicates);
     document.getElementById('btnExportQuestions').addEventListener('click', handleExport);
-    document.getElementById('btnImportQuestions').addEventListener('click', () => document.getElementById('importFile').click());
-    document.getElementById('importFile').addEventListener('change', handleImport);
     document.getElementById('btnCloseModal').addEventListener('click', closeQuestionModal);
     document.getElementById('btnCancelModal').addEventListener('click', closeQuestionModal);
     document.getElementById('modalOverlay').addEventListener('click', closeQuestionModal);
     document.getElementById('btnSaveQuestion').addEventListener('click', handleSaveQuestion);
     document.getElementById('searchInput').addEventListener('input', filterQuestions);
+    document.getElementById('btnCloseDuplicateModal').addEventListener('click', closeDuplicateModal);
+    document.getElementById('btnCloseDuplicateModalFooter').addEventListener('click', closeDuplicateModal);
+    document.getElementById('duplicateModalOverlay').addEventListener('click', closeDuplicateModal);
 }
 
 // ===========================
@@ -219,7 +220,6 @@ async function handleSaveQuestion() {
         }
         
         if (result.success) {
-            alert(editingQuestionId ? 'Question modifiée avec succès !' : 'Question ajoutée avec succès !');
             closeQuestionModal();
             loadDashboardData();
         } else {
@@ -261,14 +261,6 @@ async function deleteQuestionConfirm(questionId) {
         console.error('Error deleting question:', error);
         alert('Erreur lors de la suppression');
     }
-}
-
-// ===========================
-// MIGRATION
-// ===========================
-async function handleMigration() {
-    // Les questions locales ont été supprimées - tout fonctionne avec Firebase
-    alert('✅ Toutes les questions sont maintenant stockées dans Firebase.\n\nAucune migration locale n\'est nécessaire.');
 }
 
 // ===========================
@@ -315,126 +307,6 @@ function handleExport() {
 }
 
 // ===========================
-// IMPORT QUESTIONS
-// ===========================
-async function handleImport(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    try {
-        const text = await file.text();
-        const lines = text.split('\n').filter(line => line.trim());
-        
-        if (lines.length < 2) {
-            alert('Le fichier CSV est vide ou invalide');
-            return;
-        }
-        
-        // Ignorer l'entête
-        const questions = [];
-        let invalidRows = 0;
-        
-        for (let i = 1; i < lines.length; i++) {
-            const row = parseCSVLine(lines[i]);
-            
-            // Support both old format (with category) and new format (without)
-            let question, answerA, answerB, answerC, answerD, correctAnswer, explanation;
-            
-            if (row.length === 8) {
-                // Old format: Catégorie,Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication
-                [, question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
-            } else if (row.length === 7) {
-                // New format: Question,Réponse A,Réponse B,Réponse C,Réponse D,Bonne réponse,Explication
-                [question, answerA, answerB, answerC, answerD, correctAnswer, explanation] = row;
-            } else {
-                invalidRows++;
-                continue;
-            }
-            
-            if (!question || !answerA || !answerB || !answerC || !answerD || !correctAnswer || !explanation) {
-                invalidRows++;
-                continue;
-            }
-            
-            // Convertir la réponse correcte (A, B, C, D) en index (0, 1, 2, 3)
-            const correctIndex = correctAnswer.trim().toUpperCase().charCodeAt(0) - 65;
-            if (correctIndex < 0 || correctIndex > 3) {
-                invalidRows++;
-                continue;
-            }
-            
-            questions.push({
-                question: question.trim(),
-                answers: [answerA.trim(), answerB.trim(), answerC.trim(), answerD.trim()],
-                correct: correctIndex,
-                explanation: explanation.trim()
-            });
-        }
-        
-        if (questions.length === 0) {
-            alert('Aucune question valide trouvée dans le fichier');
-            return;
-        }
-        
-        // Confirmation avant import
-        if (!confirm(`${questions.length} questions seront importées.\n\nContinuer ?`)) {
-            return;
-        }
-        
-        const btn = document.getElementById('btnImportQuestions');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i><span class="btn-text">Import en cours...</span>';
-        
-        // Importer les questions une par une
-        let imported = 0;
-        for (const q of questions) {
-            const result = await addQuestion(q);
-            if (result.success) {
-                imported++;
-            }
-        }
-        
-        alert(`Import réussi ! ${imported}/${questions.length} questions ont été importées.\n${invalidRows > 0 ? `(${invalidRows} lignes invalides ignorées)` : ''}`);
-        loadDashboardData();
-        
-    } catch (error) {
-        console.error('❌ Erreur import:', error);
-        alert('Erreur lors de l\'import : ' + error.message);
-    } finally {
-        const btn = document.getElementById('btnImportQuestions');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-upload btn-icon"></i><span class="btn-text">Importer (CSV)</span>';
-        // Réinitialiser l'input file
-        event.target.value = '';
-    }
-}
-
-// ===========================
-// CSV PARSER
-// ===========================
-function parseCSVLine(line) {
-    const result = [];
-    let current = '';
-    let insideQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"') {
-            insideQuotes = !insideQuotes;
-        } else if (char === ',' && !insideQuotes) {
-            result.push(current);
-            current = '';
-        } else {
-            current += char;
-        }
-    }
-    
-    result.push(current);
-    return result.map(item => item.replace(/^"|"$/g, '').replace(/""/g, '"'));
-}
-
-// ===========================
 // LOGOUT
 // ===========================
 async function handleLogout() {
@@ -450,6 +322,384 @@ async function handleLogout() {
 // CATEGORY FILTER (désactivé - plus de catégories)
 // ===========================
 // Fonction supprimée - les questions n'ont plus de catégories
+
+// ===========================
+// DUPLICATE SCANNER
+// ===========================
+
+/**
+ * Normalise un texte pour la comparaison
+ */
+function normalizeText(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[éèêë]/g, 'e')
+        .replace(/[àâä]/g, 'a')
+        .replace(/[ùûü]/g, 'u')
+        .replace(/[ôö]/g, 'o')
+        .replace(/[îï]/g, 'i')
+        .replace(/[ç]/g, 'c')
+        .replace(/[^a-z0-9\s]/g, '') // Enlever la ponctuation
+        .replace(/\s+/g, ' '); // Normaliser les espaces
+}
+
+/**
+ * Calcule la similarité entre deux textes (0-1)
+ * Utilise une combinaison de Levenshtein et de comparaison de mots
+ */
+function calculateSimilarity(text1, text2) {
+    const norm1 = normalizeText(text1);
+    const norm2 = normalizeText(text2);
+    
+    // Si les textes sont identiques
+    if (norm1 === norm2) return 1.0;
+    
+    // Distance de Levenshtein normalisée
+    const distance = levenshteinDistance(norm1, norm2);
+    const maxLength = Math.max(norm1.length, norm2.length);
+    const levenshteinSimilarity = 1 - (distance / maxLength);
+    
+    // Similarité basée sur les mots communs
+    const words1 = new Set(norm1.split(/\s+/));
+    const words2 = new Set(norm2.split(/\s+/));
+    const commonWords = [...words1].filter(w => words2.has(w)).length;
+    const totalWords = Math.max(words1.size, words2.size);
+    const wordSimilarity = totalWords > 0 ? commonWords / totalWords : 0;
+    
+    // Moyenne pondérée
+    return (levenshteinSimilarity * 0.6) + (wordSimilarity * 0.4);
+}
+
+/**
+ * Calcule la distance de Levenshtein entre deux chaînes
+ */
+function levenshteinDistance(str1, str2) {
+    const matrix = [];
+    
+    for (let i = 0; i <= str2.length; i++) {
+        matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= str1.length; j++) {
+        matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= str2.length; i++) {
+        for (let j = 1; j <= str1.length; j++) {
+            if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+                matrix[i][j] = matrix[i - 1][j - 1];
+            } else {
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+            }
+        }
+    }
+    
+    return matrix[str2.length][str1.length];
+}
+
+/**
+ * Charge les paires de doublons ignorées depuis Firestore
+ */
+async function loadIgnoredPairs() {
+    try {
+        const ignoredSnapshot = await db.collection('ignoredDuplicatePairs').get();
+        const ignoredSet = new Set();
+        
+        ignoredSnapshot.forEach(doc => {
+            const { q1Id, q2Id } = doc.data();
+            // Ajouter dans les deux sens pour la comparaison
+            ignoredSet.add(`${q1Id}|${q2Id}`);
+            ignoredSet.add(`${q2Id}|${q1Id}`);
+        });
+        
+        console.log(`✅ ${ignoredSet.size / 2} paires ignorées chargées`);
+        return ignoredSet;
+    } catch (error) {
+        console.error('❌ Erreur chargement paires ignorées:', error);
+        return new Set();
+    }
+}
+
+/**
+ * Sauvegarde une paire de doublons ignorée dans Firestore
+ */
+async function saveIgnoredPair(q1Id, q2Id) {
+    try {
+        await db.collection('ignoredDuplicatePairs').add({
+            q1Id: q1Id,
+            q2Id: q2Id,
+            createdAt: new Date(),
+            userId: auth.currentUser.uid
+        });
+        console.log(`✅ Paire ignorée sauvegardée: ${q1Id} - ${q2Id}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Erreur sauvegarde paire ignorée:', error);
+        return false;
+    }
+}
+
+/**
+ * Trouve les doublons potentiels dans la liste des questions
+ */
+async function findDuplicates(questions, threshold = 0.75, ignoredPairs = null) {
+    // Charger les paires ignorées si non fournies
+    if (!ignoredPairs) {
+        ignoredPairs = await loadIgnoredPairs();
+    }
+    
+    const duplicates = [];
+    const processedPairs = new Set();
+    
+    for (let i = 0; i < questions.length; i++) {
+        for (let j = i + 1; j < questions.length; j++) {
+            const pairKey = `${i}-${j}`;
+            if (processedPairs.has(pairKey)) continue;
+            
+            const q1 = questions[i];
+            const q2 = questions[j];
+            
+            // Vérifier si cette paire a déjà été marquée comme non-doublon
+            if (ignoredPairs.has(`${q1.id}|${q2.id}`) || ignoredPairs.has(`${q2.id}|${q1.id}`)) {
+                console.log(`⏭️ Paire ignorée: ${q1.id} - ${q2.id}`);
+                processedPairs.add(pairKey);
+                continue;
+            }
+            
+            const similarity = calculateSimilarity(q1.question, q2.question);
+            
+            if (similarity >= threshold) {
+                duplicates.push({
+                    q1: q1,
+                    q2: q2,
+                    similarity: Math.round(similarity * 100),
+                    index1: i,
+                    index2: j
+                });
+            }
+            
+            processedPairs.add(pairKey);
+        }
+    }
+    
+    // Trier par score de similarité (décroissant)
+    return duplicates.sort((a, b) => b.similarity - a.similarity);
+}
+
+/**
+ * Lance le scan des doublons
+ */
+async function handleScanDuplicates() {
+    const scanBtn = document.getElementById('btnScanDuplicates');
+    scanBtn.disabled = true;
+    scanBtn.innerHTML = '<i class="fas fa-spinner fa-spin btn-icon"></i><span class="btn-text">Scan en cours...</span>';
+    
+    try {
+        // Charger les paires ignorées
+        const ignoredPairs = await loadIgnoredPairs();
+        console.log(`📊 Scan avec ${ignoredPairs.size / 2} paires ignorées`);
+        
+        // Trouver les doublons (en excluant les paires ignorées)
+        const duplicates = await findDuplicates(allQuestions, 0.75, ignoredPairs);
+        
+        // Afficher les résultats
+        displayDuplicateResults(duplicates);
+    } catch (error) {
+        console.error('Erreur lors du scan des doublons:', error);
+        alert('Erreur lors du scan des doublons: ' + error.message);
+    } finally {
+        scanBtn.disabled = false;
+        scanBtn.innerHTML = '<i class="fas fa-search btn-icon"></i><span class="btn-text">Scanner les doublons</span>';
+    }
+}
+
+/**
+ * Affiche les résultats du scan des doublons
+ */
+function displayDuplicateResults(duplicates) {
+    const modalBody = document.getElementById('duplicateModalBody');
+    const modal = document.getElementById('duplicateModal');
+    
+    if (duplicates.length === 0) {
+        modalBody.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <p>✅ Aucun doublon trouvé ! Votre base de questions est propre.</p>
+            </div>
+        `;
+    } else {
+        let html = `
+            <div class="duplicates-info">
+                <p><strong>${duplicates.length}</strong> paire(s) de questions similaires détectée(s)</p>
+            </div>
+            <div class="duplicates-list">
+        `;
+        
+        duplicates.forEach((pair, index) => {
+            const similarityClass = pair.similarity >= 95 ? 'high' : pair.similarity >= 85 ? 'medium' : 'low';
+            
+            html += `
+                <div class="duplicate-pair ${similarityClass}" data-index="${index}" data-q1id="${escapeHtml(pair.q1.id)}" data-q2id="${escapeHtml(pair.q2.id)}">
+                    <div class="duplicate-pair-header">
+                        <div class="similarity-badge" style="background: ${getSimilarityColor(pair.similarity)};">
+                            ${pair.similarity}%
+                        </div>
+                        <span class="similarity-label">Similarité</span>
+                    </div>
+                    
+                    <div class="duplicate-questions">
+                        <div class="duplicate-question">
+                            <h4>Question 1</h4>
+                            <p class="question-text">${escapeHtml(pair.q1.question)}</p>
+                            <div class="answers-preview">
+                                ${pair.q1.answers.map((a, i) => `
+                                    <div class="answer-preview ${i === pair.q1.correct ? 'correct' : ''}">
+                                        ${String.fromCharCode(65 + i)}. ${escapeHtml(a)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="duplicate-question">
+                            <h4>Question 2</h4>
+                            <p class="question-text">${escapeHtml(pair.q2.question)}</p>
+                            <div class="answers-preview">
+                                ${pair.q2.answers.map((a, i) => `
+                                    <div class="answer-preview ${i === pair.q2.correct ? 'correct' : ''}">
+                                        ${String.fromCharCode(65 + i)}. ${escapeHtml(a)}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="duplicate-actions">
+                        <button class="btn btn-small btn-danger" onclick="handleDeleteDuplicate('${pair.q2.id}', ${index})">
+                            <i class="fas fa-trash"></i> Supprimer la 2ème
+                        </button>
+                        <button class="btn btn-small btn-warning" onclick="handleIgnoreDuplicate(${index})">
+                            <i class="fas fa-times"></i> Ce n'est pas un doublon
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += `</div>`;
+        modalBody.innerHTML = html;
+    }
+    
+    modal.classList.add('show');
+}
+
+/**
+ * Retourne la couleur basée sur le pourcentage de similarité
+ */
+function getSimilarityColor(similarity) {
+    if (similarity >= 95) return '#ef4444'; // Red - très probable
+    if (similarity >= 85) return '#f59e0b'; // Orange - probable
+    return '#3b82f6'; // Blue - possible
+}
+
+/**
+ * Échappe le HTML pour éviter les injections
+ */
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
+ * Supprime une question détectée comme doublon
+ */
+async function handleDeleteDuplicate(questionId, pairIndex) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette question ? Cette action est irréversible.')) {
+        return;
+    }
+    
+    try {
+        const result = await deleteQuestion(questionId);
+        if (result.success) {
+            alert('Question supprimée avec succès !');
+            
+            // Retirer la paire des résultats affichés
+            const pairElement = document.querySelector(`[data-index="${pairIndex}"]`);
+            if (pairElement) {
+                pairElement.style.opacity = '0.5';
+                pairElement.style.textDecoration = 'line-through';
+            }
+            
+            // Recharger après 1 seconde
+            setTimeout(() => {
+                loadDashboardData();
+            }, 1000);
+        } else {
+            alert('Erreur : ' + result.error);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('Erreur lors de la suppression');
+    }
+}
+
+/**
+ * Rejette une détection de doublon (marque comme "ce n'est pas un doublon")
+ */
+async function handleIgnoreDuplicate(pairIndex) {
+    // Récupérer les IDs des questions
+    const pairElement = document.querySelector(`[data-index="${pairIndex}"]`);
+    if (!pairElement) return;
+    
+    const q1Id = pairElement.dataset.q1id;
+    const q2Id = pairElement.dataset.q2id;
+    
+    if (!q1Id || !q2Id) {
+        console.error('❌ IDs de questions manquants');
+        return;
+    }
+    
+    try {
+        // Sauvegarder dans Firestore
+        const saved = await saveIgnoredPair(q1Id, q2Id);
+        
+        if (saved) {
+            // Afficher le message de confirmation visuellement
+            pairElement.style.opacity = '0.5';
+            pairElement.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+            pairElement.innerHTML = `
+                <div class="ignored-message">
+                    <i class="fas fa-check-circle"></i>
+                    <p>Marqué comme non-doublon ✓</p>
+                </div>
+            `;
+            console.log(`✅ Paire marquée comme non-doublon et sauvegardée`);
+        } else {
+            alert('Erreur lors de la sauvegarde');
+        }
+    } catch (error) {
+        console.error('❌ Erreur:', error);
+        alert('Erreur lors du marquage du non-doublon');
+    }
+}
+
+/**
+ * Ferme la modal des doublons
+ */
+function closeDuplicateModal() {
+    const modal = document.getElementById('duplicateModal');
+    modal.classList.remove('show');
+}
 
 // ===========================
 // PARTICLES ANIMATION

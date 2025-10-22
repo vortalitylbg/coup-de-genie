@@ -64,19 +64,14 @@
                     <i class="fas fa-plus btn-icon"></i>
                     <span class="btn-text">Ajouter une question</span>
                 </button>
-                <button class="btn btn-secondary" id="btnMigrateQuestions">
-                    <i class="fas fa-database btn-icon"></i>
-                    <span class="btn-text">Migrer les questions locales</span>
+                <button class="btn btn-secondary" id="btnScanDuplicates">
+                    <i class="fas fa-search btn-icon"></i>
+                    <span class="btn-text">Scanner les doublons</span>
                 </button>
                 <button class="btn btn-secondary" id="btnExportQuestions">
                     <i class="fas fa-download btn-icon"></i>
                     <span class="btn-text">Exporter (CSV)</span>
                 </button>
-                <button class="btn btn-secondary" id="btnImportQuestions">
-                    <i class="fas fa-upload btn-icon"></i>
-                    <span class="btn-text">Importer (CSV)</span>
-                </button>
-                <input type="file" id="importFile" accept=".csv" style="display: none;">
             </div>
 
             <!-- Questions List -->
@@ -172,6 +167,32 @@
                 <button class="btn btn-primary" id="btnSaveQuestion">
                     <i class="fas fa-save btn-icon"></i>
                     <span class="btn-text">Enregistrer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Scanner Modal -->
+    <div class="modal" id="duplicateModal">
+        <div class="modal-overlay" id="duplicateModalOverlay"></div>
+        <div class="modal-content duplicate-modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">
+                    <i class="fas fa-search"></i>
+                    Scanner des doublons
+                </h2>
+                <button class="modal-close" id="btnCloseDuplicateModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body" id="duplicateModalBody">
+                <!-- Content will be dynamically filled -->
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btnCloseDuplicateModalFooter">
+                    <span class="btn-text">Fermer</span>
                 </button>
             </div>
         </div>
