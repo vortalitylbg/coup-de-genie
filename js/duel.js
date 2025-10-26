@@ -72,10 +72,75 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (!isInitialized) {
         isInitialized = true;
+        initAuthListeners(user.uid);
+        initUnloadListeners(user.uid);
         initCategoryModal();
         showCategoryModal();
     }
 });
+
+/**
+ * Initialiser les listeners de changement d'authentification
+ */
+function initAuthListeners(userId) {
+    console.log('🔐 Initialisation des listeners d\'authentification...');
+    
+    // Écouter les changements d'état d'authentification
+    onAuthStateChanged((user) => {
+        if (!user) {
+            console.warn('🚪 L\'utilisateur s\'est déconnecté!');
+            // Arrêter les listeners en direct
+            if (duelState.duelUnsubscribe) {
+                duelState.duelUnsubscribe();
+                console.log('✅ Listener du duel arrêté');
+            }
+            // Supprimer tous les duels en attente
+            deleteUserPendingDuels(userId).then(result => {
+                console.log('✅ Duels nettoyés:', result.deleted, 'supprimés');
+            });
+        }
+    });
+}
+
+/**
+ * Initialiser les listeners de déchargement de page
+ */
+function initUnloadListeners(userId) {
+    console.log('📄 Initialisation des listeners de déchargement...');
+    
+    // Gérer la fermeture de l'onglet/fenêtre
+    window.addEventListener('beforeunload', async (event) => {
+        console.log('⚠️ Page en cours de fermeture...');
+        
+        // Arrêter les listeners
+        if (duelState.duelUnsubscribe) {
+            duelState.duelUnsubscribe();
+        }
+        
+        // Arrêter les timers
+        if (duelState.timerInterval) {
+            clearInterval(duelState.timerInterval);
+        }
+        
+        // Supprimer les duels en attente (asynchrone sans attendre)
+        deleteUserPendingDuels(userId).then(result => {
+            console.log('✅ Duels nettoyés à la fermeture:', result.deleted, 'supprimés');
+        }).catch(error => {
+            console.error('❌ Erreur nettoyage duels:', error);
+        });
+        
+        // Ne pas afficher le message de confirmation (rare que ça marche)
+        // return undefined;
+    });
+    
+    // Gérer aussi le rechargement de la page
+    window.addEventListener('unload', () => {
+        console.log('🔄 Page rechargée ou fermée');
+        if (duelState.duelUnsubscribe) {
+            duelState.duelUnsubscribe();
+        }
+    });
+}
 
 // Fonction pour attendre que Firebase soit prêt
 function waitForFirebase() {
@@ -286,11 +351,26 @@ async function startMatchmaking() {
     // Bouton annuler
     const btnCancel = document.getElementById('btnCancelMatchmaking');
     if (btnCancel) {
-        btnCancel.addEventListener('click', () => {
+        // Cloner le bouton pour éviter les listeners multiples
+        const newCancelBtn = btnCancel.cloneNode(true);
+        btnCancel.parentNode.replaceChild(newCancelBtn, btnCancel);
+        
+        newCancelBtn.addEventListener('click', async () => {
             console.log('🚫 Annulation du matchmaking');
+            
+            // Arrêter l'observateur
             if (duelState.duelUnsubscribe) {
                 duelState.duelUnsubscribe();
+                console.log('✅ Listener du duel arrêté');
             }
+            
+            // Supprimer le duel en attente
+            if (duelState.duelId) {
+                console.log('🗑️ Suppression du duel:', duelState.duelId);
+                const result = await deleteUserPendingDuels(getCurrentUser().uid);
+                console.log('✅ Duels supprimés:', result.deleted);
+            }
+            
             window.location.href = 'index.html';
         });
     }

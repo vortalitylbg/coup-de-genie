@@ -110,6 +110,7 @@ function initGameEventListeners() {
     document.getElementById('btnNext').addEventListener('click', nextQuestion);
     document.getElementById('btnReplay').addEventListener('click', replayGame);
     document.getElementById('btnHome').addEventListener('click', goHome);
+    document.getElementById('btnLeaderboard').addEventListener('click', goToLeaderboard);
 }
 
 // ===========================
@@ -369,6 +370,10 @@ function replayGame() {
 
 function goHome() {
     window.location.href = 'index.html';
+}
+
+function goToLeaderboard() {
+    window.location.href = 'leaderboard.html';
 }
 
 // ===========================

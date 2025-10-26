@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Contactez Coup de génie - Des questions, des suggestions ou un problème ? Nous sommes là pour vous aider !">
+    <meta name="keywords" content="contact, support, aide, coup de génie, quiz">
+    <meta name="robots" content="index, follow">
+    <meta property="og:title" content="Contact - Coup de génie">
+    <meta property="og:description" content="Contactez l'équipe de Coup de génie">
+    <meta property="og:type" content="website">
+    <title>Contact - Coup de génie</title>
+    <!-- Styles globaux -->
+    <link rel="stylesheet" href="assets/css/main.css">
+    <!-- Styles spécifiques -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Améliorations UI/UX -->
+    <link rel="stylesheet" href="assets/css/enhancements.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6310403411998518"
+         crossorigin="anonymous"></script>
+    <style>
+        .page-content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+
+        .contact-info {
+            background: rgba(30, 27, 75, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-icon {
+            font-size: 1.5rem;
+            color: #7c3aed;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .info-content p {
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .info-content strong {
+            color: var(--text-primary);
+        }
+
+        .form-container {
+            background: rgba(30, 27, 75, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: rgba(124, 58, 237, 0.8);
+            background: rgba(15, 23, 42, 1);
+            box-shadow: 0 0 10px rgba(124, 58, 237, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .response-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .response-message.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10b981;
+            color: #34d399;
+            display: block;
+        }
+
+        .response-message.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #ef4444;
+            color: #f87171;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header avec connexion -->
+        <header class="header">
+            <a href="index.html" style="text-decoration: none;">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>Coup de génie</span>
+                </div>
+            </a>
+            <button class="btn-connexion" id="btnConnexion">
+                <i class="fas fa-user"></i>
+                <span>Connexion</span>
+            </button>
+        </header>
+
+        <!-- Contenu principal -->
+        <main class="main-content">
+            <div class="page-content">
+                <h1 class="page-title">Nous Contacter</h1>
+                <p class="page-subtitle">Nous aimerions vous entendre ! Des questions, des suggestions ou un problème ?</p>
+
+                <!-- Informations de contact -->
+                <div class="contact-info">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="info-content">
+                            <p><strong>Email</strong></p>
+                            <p><a href="mailto:contact@unpixelpres.fr" style="color: #7c3aed; text-decoration: none;">contact@unpixelpres.fr</a></p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="info-content">
+                            <p><strong>Temps de réponse</strong></p>
+                            <p>Nous répondons généralement sous 24-48h</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="info-content">
+                            <p><strong>Feedback</strong></p>
+                            <p>Toutes les suggestions sont bienvenues pour améliorer Coup de génie !</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulaire de contact -->
+                <div class="form-container">
+                    <form id="contactForm" action="https://formspree.io/f/xjkpkggw" method="POST">
+                        <div id="responseMessage" class="response-message"></div>
+
+                        <div class="form-group">
+                            <label for="name">Nom <span style="color: #ef4444;">*</span></label>
+                            <input type="text" id="name" name="name" required placeholder="Votre nom">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email <span style="color: #ef4444;">*</span></label>
+                            <input type="email" id="email" name="email" required placeholder="votre@email.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="subject">Sujet <span style="color: #ef4444;">*</span></label>
+                            <input type="text" id="subject" name="subject" required placeholder="Sujet de votre message">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="message">Message <span style="color: #ef4444;">*</span></label>
+                            <textarea id="message" name="message" required placeholder="Votre message..."></textarea>
+                        </div>
+
+                        <button type="submit" class="submit-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Envoyer le message</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="rules.html">Règles du Jeu</a>
+                    <span class="separator">•</span>
+                    <a href="about.html">À Propos</a>
+                    <span class="separator">•</span>
+                    <a href="contact.html">Contact</a>
+                    <span class="separator">•</span>
+                    <a href="privacy.html">Politique de confidentialité</a>
+                    <span class="separator">•</span>
+                    <a href="terms.html">CGU</a>
+                    <span class="separator">•</span>
+                    <a href="legal.html">Mentions légales</a>
+                    <span class="separator">•</span>
+                    <a href="mailto:contact@unpixelpres.fr">Contact</a>
+                </div>
+            </div>
+            <p class="footer-copyright">© <span id="footerYear"></span> Coup de génie. Tous droits réservés.</p>
+        </footer>
+    </div>
+
+    <!-- Particules d'animation en arrière-plan -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="js/firebase.js"></script>
+    <script src="js/themes.js"></script>
+    <script src="js/enhancements.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Mettre à jour l'année dans le footer
+        document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+        // Gestion du formulaire
+        const contactForm = document.getElementById('contactForm');
+        const responseMessage = document.getElementById('responseMessage');
+
+        // Formspree gère les messages de succès/erreur automatiquement
+        // On peut ajouter du feedback visuel supplémentaire ici si nécessaire
+    </script>
+</body>
+</html>

@@ -6,6 +6,9 @@ Allow: /duel.html
 Allow: /profile.html
 Allow: /leaderboard.html
 Allow: /premium.html
+Allow: /rules.html
+Allow: /about.html
+Allow: /contact.html
 Allow: /privacy.html
 Allow: /terms.html
 Allow: /legal.html

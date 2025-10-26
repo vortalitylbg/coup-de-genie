@@ -57,6 +57,33 @@
         <mobile:mobile/>
     </url>
     
+    <!-- Règles du Jeu -->
+    <url>
+        <loc>https://coupdegenie.site/rules.html</loc>
+        <lastmod>2024-12-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <mobile:mobile/>
+    </url>
+    
+    <!-- À Propos -->
+    <url>
+        <loc>https://coupdegenie.site/about.html</loc>
+        <lastmod>2024-12-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.75</priority>
+        <mobile:mobile/>
+    </url>
+    
+    <!-- Contact -->
+    <url>
+        <loc>https://coupdegenie.site/contact.html</loc>
+        <lastmod>2024-12-01</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.75</priority>
+        <mobile:mobile/>
+    </url>
+    
     <!-- Politique de Confidentialité (IMPORTANT) -->
     <url>
         <loc>https://coupdegenie.site/privacy.html</loc>

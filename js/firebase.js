@@ -639,12 +639,13 @@ async function joinDuel(categories) {
         const playerElo = userData.elo || 100;
         console.log('✅ ELO du joueur:', playerElo);
         
-        // Chercher un duel en attente avec un ELO similaire (+/- 200)
+        // Chercher un duel en attente avec un ELO similaire (+/- 100)
+        // Plus strict que 200 pour éviter les mauvais matchings
         console.log('🔍 Recherche d\'un duel en attente...');
         const duelsSnapshot = await db.collection('duels')
             .where('status', '==', 'waiting')
-            .where('player1.elo', '>=', playerElo - 200)
-            .where('player1.elo', '<=', playerElo + 200)
+            .where('player1.elo', '>=', playerElo - 100)
+            .where('player1.elo', '<=', playerElo + 100)
             .orderBy('player1.elo')
             .orderBy('createdAt')
             .limit(1)
@@ -652,16 +653,36 @@ async function joinDuel(categories) {
         
         console.log('📥 Duels trouvés:', duelsSnapshot.size);
         
-        if (duelsSnapshot.empty) {
-            // Aucun duel trouvé, en créer un nouveau
-            console.log('➕ Aucun duel trouvé, création d\'un nouveau...');
+        // 🧹 Filtrer les duels trop vieux (plus de 3 minutes) ou sans questions
+        let validDuel = null;
+        const now = Date.now();
+        const MAX_AGE = 3 * 60 * 1000; // 3 minutes
+        
+        for (const duelDoc of duelsSnapshot.docs) {
+            const duelData = duelDoc.data();
+            const createdAtMs = duelData.createdAt ? duelData.createdAt.toMillis() : 0;
+            const duelAge = now - createdAtMs;
+            
+            console.log('⏱️ Âge du duel:', (duelAge / 1000).toFixed(1), 'secondes');
+            
+            if (duelAge > MAX_AGE) {
+                console.log('⚠️ Duel trop ancien, suppression...');
+                await deleteDuel(duelDoc.id);
+            } else {
+                validDuel = { id: duelDoc.id, data: duelData };
+                break;
+            }
+        }
+        
+        if (!validDuel) {
+            // Aucun duel valide trouvé, en créer un nouveau
+            console.log('➕ Aucun duel valide trouvé, création d\'un nouveau...');
             return await createDuel(categories);
         }
         
         // Rejoindre le duel trouvé
-        const duelDoc = duelsSnapshot.docs[0];
-        const duelId = duelDoc.id;
-        const duelData = duelDoc.data();
+        const duelId = validDuel.id;
+        const duelData = validDuel.data;
         
         console.log('🎯 Duel trouvé:', duelId);
         console.log('👥 Player1:', duelData.player1.displayName, '- ELO:', duelData.player1.elo);
@@ -693,6 +714,10 @@ async function joinDuel(categories) {
             status: 'ready',
             questions: questions
         });
+        
+        // 🧹 Supprimer les autres duels en attente du player2
+        // (pour éviter que le même joueur ne rejoigne plusieurs duels)
+        await deleteOtherPendingDuels(user.uid, duelId);
         
         console.log('✅ Duel rejoint avec succès:', duelId);
         return { success: true, duelId: duelId };
@@ -983,6 +1008,18 @@ async function finishDuel(duelId, winner = null) {
             }
         });
         
+        // 🧹 Supprimer le duel après un court délai (permet à l'UI de s'afficher)
+        setTimeout(() => {
+            console.log('🗑️ Suppression du duel terminé après délai...');
+            deleteDuel(duelId).then(result => {
+                if (result.success) {
+                    console.log('✅ Duel terminé supprimé de la base');
+                } else {
+                    console.warn('⚠️ Impossible de supprimer le duel:', result.error);
+                }
+            });
+        }, 2000); // 2 secondes de délai
+        
         return { 
             success: true, 
             winner,
@@ -994,6 +1031,99 @@ async function finishDuel(duelId, winner = null) {
     } catch (error) {
         console.error('❌ Erreur fin duel:', error);
         console.error('Stack trace:', error.stack);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Supprimer un duel de la base de données
+ */
+async function deleteDuel(duelId) {
+    try {
+        console.log('🗑️ Suppression du duel:', duelId);
+        await db.collection('duels').doc(duelId).delete();
+        console.log('✅ Duel supprimé avec succès');
+        return { success: true };
+    } catch (error) {
+        console.error('❌ Erreur suppression duel:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Supprimer tous les duels en attente créés par un utilisateur
+ * (utile lors de la déconnexion ou de la fermeture de la page)
+ */
+async function deleteUserPendingDuels(userId) {
+    try {
+        console.log('🔍 Recherche des duels en attente pour:', userId);
+        
+        // Trouver les duels créés par cet utilisateur et en attente
+        const duelsSnapshot = await db.collection('duels')
+            .where('player1.uid', '==', userId)
+            .where('status', '==', 'waiting')
+            .get();
+        
+        console.log('📋 Duels trouvés:', duelsSnapshot.size);
+        
+        if (duelsSnapshot.empty) {
+            console.log('ℹ️ Aucun duel en attente à supprimer');
+            return { success: true, deleted: 0 };
+        }
+        
+        // Supprimer tous les duels
+        const batch = db.batch();
+        let count = 0;
+        
+        duelsSnapshot.forEach(doc => {
+            console.log('🗑️ Marqué pour suppression:', doc.id);
+            batch.delete(doc.ref);
+            count++;
+        });
+        
+        await batch.commit();
+        console.log('✅ Duels supprimés:', count);
+        return { success: true, deleted: count };
+    } catch (error) {
+        console.error('❌ Erreur suppression duels utilisateur:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Supprimer tous les duels en attente pour un utilisateur qui a trouvé quelqu'un
+ * (quand un duel passe en 'ready')
+ */
+async function deleteOtherPendingDuels(userId, currentDuelId) {
+    try {
+        console.log('🧹 Nettoyage des autres duels en attente de:', userId);
+        
+        // Trouver les duels créés par cet utilisateur (sauf le current) et en attente
+        const duelsSnapshot = await db.collection('duels')
+            .where('player1.uid', '==', userId)
+            .where('status', '==', 'waiting')
+            .get();
+        
+        const batch = db.batch();
+        let count = 0;
+        
+        duelsSnapshot.forEach(doc => {
+            // Ne pas supprimer le duel actuel
+            if (doc.id !== currentDuelId) {
+                console.log('🗑️ Suppression du duel concurrent:', doc.id);
+                batch.delete(doc.ref);
+                count++;
+            }
+        });
+        
+        if (count > 0) {
+            await batch.commit();
+            console.log('✅ Duels concurrents supprimés:', count);
+        }
+        
+        return { success: true, deleted: count };
+    } catch (error) {
+        console.error('❌ Erreur nettoyage duels:', error);
         return { success: false, error: error.message };
     }
 }
@@ -1118,6 +1248,9 @@ window.submitDuelAnswer = submitDuelAnswer;
 window.updatePlayerTime = updatePlayerTime;
 window.finishDuel = finishDuel;
 window.watchDuel = watchDuel;
+window.deleteDuel = deleteDuel;
+window.deleteUserPendingDuels = deleteUserPendingDuels;
+window.deleteOtherPendingDuels = deleteOtherPendingDuels;
 window.getLeaderboard = getLeaderboard;
 window.getPlayerRank = getPlayerRank;
 
