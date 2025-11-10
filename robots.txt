@@ -12,13 +12,21 @@ Allow: /contact.html
 Allow: /privacy.html
 Allow: /terms.html
 Allow: /legal.html
+Allow: /blog.html
 Allow: /assets/
 Allow: /js/
+Disallow: /admin.html
+Disallow: /admin
+Disallow: /private
 Disallow: /data/
-Disallow: *.json
+Disallow: *.json$
 
 # Google AdSense
 User-agent: Googlebot
+Allow: /
+
+# Google Adsense specific
+User-agent: Google-AdSense-Bot
 Allow: /
 
 # Crawl-delay
@@ -26,4 +34,3 @@ Crawl-delay: 1
 
 # Sitemap
 Sitemap: https://coupdegenie.site/sitemap.xml
-Sitemap: https://coupdegenie.site/sitemap-mobile.xml

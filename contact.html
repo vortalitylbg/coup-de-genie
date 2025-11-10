@@ -9,6 +9,9 @@
     <meta property="og:title" content="Contact - Coup de génie">
     <meta property="og:description" content="Contactez l'équipe de Coup de génie">
     <meta property="og:type" content="website">
+    <link rel="canonical" href="https://coupdegenie.site/contact.html">
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+    <link rel="apple-touch-icon" href="assets/img/favicon.ico">
     <title>Contact - Coup de génie</title>
     <!-- Styles globaux -->
     <link rel="stylesheet" href="assets/css/main.css">
@@ -136,10 +139,10 @@
         .submit-btn {
             width: 100%;
             padding: 14px 24px;
-            background: linear-gradient(135deg, #7c3aed, #3b82f6);
-            border: none;
+            background: var(--bg-glass);
+            border: 3px solid var(--border-color);
             border-radius: 8px;
-            color: white;
+            color: var(--text-primary);
             font-weight: 600;
             font-size: 1rem;
             cursor: pointer;
@@ -148,15 +151,18 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            backdrop-filter: blur(10px);
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
+            transform: translateY(-3px) scale(1.03);
+            background: var(--bg-card-hover);
+            border-color: var(--primary-purple);
+            box-shadow: var(--shadow-md);
         }
 
         .submit-btn:active {
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
 
         .response-message {
@@ -275,6 +281,8 @@
                     <a href="rules.html">Règles du Jeu</a>
                     <span class="separator">•</span>
                     <a href="about.html">À Propos</a>
+                    <span class="separator">•</span>
+                    <a href="blog.html">Blog</a>
                     <span class="separator">•</span>
                     <a href="contact.html">Contact</a>
                     <span class="separator">•</span>

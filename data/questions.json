@@ -1,1 +1,162 @@
-[]
+[
+  {
+    "id": 1,
+    "question": "Quel est le plus grand désert du monde?",
+    "answers": ["Le désert du Sahara", "Le désert de Gobi", "L'Antarctique", "Le désert de Kalahari"],
+    "correct": 2,
+    "category": "Géographie",
+    "difficulty": "facile"
+  },
+  {
+    "id": 2,
+    "question": "Qui a écrit 'Les Misérables'?",
+    "answers": ["Victor Hugo", "Alexandre Dumas", "Guy de Maupassant", "Balzac"],
+    "correct": 0,
+    "category": "Littérature",
+    "difficulty": "facile"
+  },
+  {
+    "id": 3,
+    "question": "En quelle année l'homme a-t-il marché sur la Lune pour la première fois?",
+    "answers": ["1965", "1969", "1972", "1968"],
+    "correct": 1,
+    "category": "Histoire",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 4,
+    "question": "Quel élément chimique a le symbole 'Au'?",
+    "answers": ["L'argent", "L'or", "L'aluminium", "L'argon"],
+    "correct": 1,
+    "category": "Sciences",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 5,
+    "question": "Combien de côtés a un hexagone?",
+    "answers": ["4", "5", "6", "8"],
+    "correct": 2,
+    "category": "Mathématiques",
+    "difficulty": "facile"
+  },
+  {
+    "id": 6,
+    "question": "Quel est le plus haut sommet du monde?",
+    "answers": ["K2", "Mont-Blanc", "Mont Everest", "Denali"],
+    "correct": 2,
+    "category": "Géographie",
+    "difficulty": "facile"
+  },
+  {
+    "id": 7,
+    "question": "Combien de continents y a-t-il sur Terre?",
+    "answers": ["5", "6", "7", "8"],
+    "correct": 2,
+    "category": "Géographie",
+    "difficulty": "facile"
+  },
+  {
+    "id": 8,
+    "question": "Quelle est la capitale de la France?",
+    "answers": ["Lyon", "Marseille", "Paris", "Toulouse"],
+    "correct": 2,
+    "category": "Géographie",
+    "difficulty": "facile"
+  },
+  {
+    "id": 9,
+    "question": "En quel siècle la Renaissance a-t-elle débuté?",
+    "answers": ["12ème siècle", "14ème siècle", "16ème siècle", "18ème siècle"],
+    "correct": 1,
+    "category": "Histoire",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 10,
+    "question": "Quel gaz respire principalement les êtres humains?",
+    "answers": ["L'hydrogène", "L'azote", "L'oxygène", "Le dioxyde de carbone"],
+    "correct": 2,
+    "category": "Sciences",
+    "difficulty": "facile"
+  },
+  {
+    "id": 11,
+    "question": "Qui était le premier président des États-Unis?",
+    "answers": ["Thomas Jefferson", "George Washington", "Abraham Lincoln", "Benjamin Franklin"],
+    "correct": 1,
+    "category": "Histoire",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 12,
+    "question": "Quel artiste a peint la Joconde?",
+    "answers": ["Michel-Ange", "Léonard de Vinci", "Raphael", "Donatello"],
+    "correct": 1,
+    "category": "Arts",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 13,
+    "question": "En quelle année la Seconde Guerre mondiale s'est-elle terminée?",
+    "answers": ["1943", "1944", "1945", "1946"],
+    "correct": 2,
+    "category": "Histoire",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 14,
+    "question": "Combien de pattes a une araignée?",
+    "answers": ["6", "8", "10", "12"],
+    "correct": 1,
+    "category": "Sciences",
+    "difficulty": "facile"
+  },
+  {
+    "id": 15,
+    "question": "Quel est le plus grand océan du monde?",
+    "answers": ["Océan Atlantique", "Océan Indien", "Océan Arctique", "Océan Pacifique"],
+    "correct": 3,
+    "category": "Géographie",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 16,
+    "question": "Qui a écrit 'Roméo et Juliette'?",
+    "answers": ["Christopher Marlowe", "William Shakespeare", "Ben Jonson", "Edmund Spenser"],
+    "correct": 1,
+    "category": "Littérature",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 17,
+    "question": "Quel est le plus grand pays du monde par surface?",
+    "answers": ["Canada", "États-Unis", "Russie", "Chine"],
+    "correct": 2,
+    "category": "Géographie",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 18,
+    "question": "Combien de cordes a une guitare classique?",
+    "answers": ["4", "5", "6", "7"],
+    "correct": 2,
+    "category": "Musique",
+    "difficulty": "moyen"
+  },
+  {
+    "id": 19,
+    "question": "Quel philosophe grec a fondé l'Académie?",
+    "answers": ["Socrate", "Platon", "Aristote", "Épicure"],
+    "correct": 1,
+    "category": "Philosophie",
+    "difficulty": "difficile"
+  },
+  {
+    "id": 20,
+    "question": "En quel année la Déclaration des Droits de l'Homme a-t-elle été adoptée?",
+    "answers": ["1789", "1791", "1793", "1799"],
+    "correct": 0,
+    "category": "Histoire",
+    "difficulty": "difficile"
+  }
+]
