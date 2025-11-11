@@ -89,6 +89,54 @@
             color: var(--text-primary);
         }
 
+        .article-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-purple);
+            margin: 1.5rem 0 0.75rem;
+        }
+
+        .article-list,
+        .article-list-numbered {
+            margin: 0.75rem 0 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .article-list {
+            list-style: disc;
+        }
+
+        .article-list-numbered {
+            list-style: decimal;
+        }
+
+        .article-highlight {
+            margin-top: 1rem;
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            background: rgba(124, 58, 237, 0.12);
+            border: 1px solid rgba(124, 58, 237, 0.25);
+            color: rgba(248, 250, 252, 0.9);
+        }
+
+        .article-details {
+            margin-top: 1.5rem;
+        }
+
+        .article-details summary {
+            list-style: none;
+        }
+
+        .article-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .article-details[open] .read-more {
+            color: var(--accent-gold);
+        }
+
         .read-more {
             display: inline-flex;
             align-items: center;
@@ -140,16 +188,39 @@
                 <span><i class="fas fa-clock"></i> 5 min de lecture</span>
             </div>
             <p class="article-content">
-                La culture générale est bien plus qu'une simple accumulation de faits – c'est une compréhension globale du monde qui nous entoure. Que vous prépariez un examen, que vous aimiez les quiz ou que vous souhaitiez simplement enrichir vos connaissances, voici 10 stratégies éprouvées pour améliorer votre culture générale :
+                La culture générale est un capital vivant qui se construit au quotidien. Pour progresser durablement, il ne suffit pas d'accumuler des faits : il faut structurer votre apprentissage, varier les formats et relier les connaissances entre elles. Voici comment transformer votre curiosité en habitudes gagnantes.
             </p>
+            <h3 class="article-section-title">Structurer votre progression</h3>
             <p class="article-content">
-                <strong>1. Lisez régulièrement</strong> - Les journaux, les livres et les magazines vous exposent à de nouveaux sujets chaque jour. Consacrez au moins 30 minutes par jour à la lecture.<br>
-                <strong>2. Regardez des documentaires</strong> - Les documentaires vous permettent d'apprendre visuellement et de retenir les informations plus facilement.<br>
-                <strong>3. Écoutez des podcasts</strong> - Les podcasts éducatifs peuvent être écoutés pendant vos trajets ou vos séances d'entraînement.<br>
-                <strong>4. Pratiquez avec des quiz</strong> - Les quiz comme Coup de Génie renforcent votre apprentissage à travers le jeu et la compétition.<br>
-                <strong>5. Discutez avec d'autres</strong> - Les débats et discussions enrichissent votre compréhension et vous exposent à de nouvelles perspectives.
+                Planifiez des créneaux courts mais réguliers. Une progression mesurable motive davantage qu'une session marathon ponctuelle.
             </p>
-            <span class="read-more"><i class="fas fa-arrow-right"></i> Article complet</span>
+            <ul class="article-list">
+                <li><strong>Routine de 20 minutes</strong> : commencez par un sujet que vous aimez, puis élargissez vers un domaine moins familier.</li>
+                <li><strong>Journal de curiosité</strong> : notez chaque jour deux faits appris et une question sans réponse à explorer.</li>
+                <li><strong>Révision active</strong> : reformulez à voix haute ou expliquez un concept à un ami pour vérifier votre compréhension.</li>
+            </ul>
+            <h3 class="article-section-title">Multiplier les formats d'apprentissage</h3>
+            <p class="article-content">
+                Combinez lectures, contenus audio et entraînement interactif pour ancrer les savoirs. Les quiz hebdomadaires Coup de Génie vous aident à tester vos acquis en conditions réelles et à identifier vos lacunes en quelques secondes.
+            </p>
+            <div class="article-highlight">
+                Astuce : paramétrez deux alertes sur votre téléphone, l'une pour un quiz rapide sur Coup de Génie, l'autre pour une lecture longue. Alternez les sujets pour stimuler votre mémoire à long terme.
+            </div>
+            <details class="article-details">
+                <summary class="read-more"><i class="fas fa-arrow-right"></i> Plan d'entraînement complet</summary>
+                <p class="article-content">
+                    Structurez votre mois autour de micro-objectifs thématiques. Chaque semaine, associez un thème central à trois axes : découverte, approfondissement et restitution.
+                </p>
+                <ol class="article-list-numbered">
+                    <li><strong>Semaine 1</strong> : histoire contemporaine. Lisez une synthèse, regardez un documentaire et terminez par un duel Coup de Génie consacré au XXe siècle.</li>
+                    <li><strong>Semaine 2</strong> : sciences et innovations. Alternez podcast scientifique, fiche mémo personnelle et quiz chronométré pour booster votre capacité de rappel.</li>
+                    <li><strong>Semaine 3</strong> : arts et littérature. Visitez virtuellement un musée, notez vos impressions puis confrontez-les aux questions proposées dans le mode Solo.</li>
+                    <li><strong>Semaine 4</strong> : actualités et société. Analysez trois articles de presse, identifiez les grandes tendances et challengez vos amis dans le mode Duel.</li>
+                </ol>
+                <p class="article-content">
+                    À la fin du cycle, analysez vos statistiques Coup de Génie et ajustez le programme : augmentez la difficulté sur les domaines maîtrisés et prévoyez plus de temps sur ceux qui restent fragiles.
+                </p>
+            </details>
         </article>
 
         <!-- Ads Section -->
@@ -170,19 +241,41 @@
             <h2 class="article-title"><i class="fas fa-brain"></i> Les Meilleures Catégories de Culture Générale à Connaître</h2>
             <div class="article-meta">
                 <span><i class="fas fa-calendar"></i> 10 novembre 2024</span>
-                <span><i class="fas fa-clock"></i> 4 min de lecture</span>
+                <span><i class="fas fa-clock"></i> 6 min de lecture</span>
             </div>
             <p class="article-content">
-                La culture générale couvre un large spectre de domaines. Connaître les principales catégories vous aidera à structurer votre apprentissage et à identifier vos points forts et vos lacunes.
+                Identifier les grands piliers du savoir vous permet d'équilibrer vos révisions et de mieux interpréter les questions de quiz. Voici comment organiser votre veille intellectuelle autour de catégories incontournables.
             </p>
+            <h3 class="article-section-title">Histoire et géopolitique</h3>
             <p class="article-content">
-                <strong>Histoire et Géographie</strong> - Comprendre les événements historiques majeurs et la géographie mondiale est fondamental. Des civilisations anciennes aux conflits modernes, l'histoire façonne notre compréhension du présent.<br>
-                <strong>Sciences et Nature</strong> - La biologie, la physique, la chimie et les sciences naturelles font partie des connaissances essentielles du monde moderne.<br>
-                <strong>Arts et Littérature</strong> - Les mouvements artistiques, les auteurs célèbres et les œuvres littéraires enrichissent votre sensibilité culturelle.<br>
-                <strong>Actualités et Société</strong> - Rester informé des événements actuels vous permet de comprendre le monde contemporain.<br>
-                <strong>Technologie et Innovation</strong> - Les avancées technologiques façonnent notre futur et il est crucial de comprendre les bases.
+                Classez les évènements par périodes clés (Révolution industrielle, Guerre froide, décolonisation) et reliez-les à des cartes mentales. Utilisez le mode Solo pour vérifier vos repères chronologiques : les séries « dates express » de Coup de Génie sont idéales pour mémoriser les jalons.
             </p>
-            <span class="read-more"><i class="fas fa-arrow-right"></i> Article complet</span>
+            <h3 class="article-section-title">Sciences, nature et santé</h3>
+            <p class="article-content">
+                Alternez chapitres de vulgarisation et expériences concrètes. Testez-vous avec des questions orientées « raisonnement scientifique » afin de valider les concepts, pas seulement les définitions. Les fiches personnelles ajoutées dans votre profil vous permettront de conserver vos synthèses.
+            </p>
+            <h3 class="article-section-title">Arts, littérature et culture populaire</h3>
+            <p class="article-content">
+                Construisez un fil narratif : un courant artistique, trois œuvres représentatives, un auteur majeur et un fait d'actualité lié. Les playlists Coup de Génie « chef-d'œuvre ou imposture » challengent votre capacité à reconnaître un mouvement en quelques indices.
+            </p>
+            <div class="article-highlight">
+                Conseil : créez un tableau de bord dans votre espace joueur pour noter vos scores par catégorie. Vous visualiserez immédiatement les domaines à renforcer avant un duel compétitif.
+            </div>
+            <details class="article-details">
+                <summary class="read-more"><i class="fas fa-arrow-right"></i> Feuille de route de révision</summary>
+                <p class="article-content">
+                    Répartissez vos efforts sur quatre axes complémentaires et associez chaque axe à une ressource Coup de Génie.
+                </p>
+                <ol class="article-list-numbered">
+                    <li><strong>Lundi</strong> : actualités mondiales. Lisez une analyse géopolitique puis réalisez un quiz thématique de 10 questions.</li>
+                    <li><strong>Mercredi</strong> : sciences et technologies. Décortiquez une innovation, rédigez une fiche synthèse et validez-la via un duel chronométré.</li>
+                    <li><strong>Vendredi</strong> : arts et humanités. Visionnez un MOOC ou une conférence TED, puis vérifiez votre compréhension avec le mode Solo.</li>
+                    <li><strong>Dimanche</strong> : culture pop et société. Comparez vos notes avec un ami, organisez un duel amical et partagez vos découvertes sur le salon Discord de la communauté.</li>
+                </ol>
+                <p class="article-content">
+                    Un suivi mensuel de vos résultats vous aidera à ajuster vos sessions et à garder une motivation élevée avant d'affronter le classement ELO général.
+                </p>
+            </details>
         </article>
 
         <!-- Article 3 -->
@@ -190,19 +283,37 @@
             <h2 class="article-title"><i class="fas fa-trophy"></i> Comment Exceller dans les Duels Compétitifs de Coup de Génie</h2>
             <div class="article-meta">
                 <span><i class="fas fa-calendar"></i> 10 novembre 2024</span>
-                <span><i class="fas fa-clock"></i> 6 min de lecture</span>
+                <span><i class="fas fa-clock"></i> 7 min de lecture</span>
             </div>
             <p class="article-content">
-                Le Mode Duel de Coup de Génie est une expérience compétitive unique basée sur le système ELO. Voici comment vous pouvez dominer vos adversaires et grimpez les classements :
+                Le mode Duel repose sur des matchs éclair où chaque décision compte. Pour gravir le classement ELO, développez une méthode qui combine maîtrise du contenu, gestion du stress et analyse de données.
             </p>
+            <h3 class="article-section-title">Dominer le tempo</h3>
             <p class="article-content">
-                <strong>Comprendre le Système ELO</strong> - Le système ELO calcule votre rang en fonction de vos victoires et défaites contre des joueurs de différents niveaux. Plus vous gagnez contre des adversaires plus forts, plus vos points ELO augmentent.<br>
-                <strong>Gérer le Stress du Temps</strong> - Vous avez 30 secondes par question. Entraînez-vous à prendre des décisions rapides tout en restant précis.<br>
-                <strong>Analyser Vos Défaites</strong> - Chaque défaite est une opportunité d'apprentissage. Notez les questions que vous avez manquées et révisez.<br>
-                <strong>Jouer Régulièrement</strong> - La constance est la clé. Jouez plusieurs duels chaque jour pour maintenir vos compétences et progresser.<br>
-                <strong>Se Spécialiser</strong> - Identifiez vos domaines forts et faibles. Focalisez-vous sur l'amélioration de vos domaines faibles.
+                Entraînez-vous à répondre en moins de 12 secondes afin de conserver un capital temps suffisant pour les questions difficiles. Utilisez le mode Entraînement pour calibrer votre rythme : alternez sessions rapides et sessions de réflexion approfondie.
             </p>
-            <span class="read-more"><i class="fas fa-arrow-right"></i> Article complet</span>
+            <h3 class="article-section-title">Optimiser votre stratégie de combo</h3>
+            <p class="article-content">
+                Les séries de bonnes réponses décuplent votre score. Pour les déclencher, positionnez vos domaines forts en début de duel grâce aux filtres de catégories. En cas d'hésitation, passez volontairement une question pour préserver votre combo et éviter la pénalité.
+            </p>
+            <div class="article-highlight">
+                Pensez à activer le mode « notes express » dans votre profil : après chaque duel, consignez trois notions à revoir. Cette mémoire froide est l'allié numéro un des joueurs classés Diamant.
+            </div>
+            <details class="article-details">
+                <summary class="read-more"><i class="fas fa-arrow-right"></i> Routine d'analyse post-duel</summary>
+                <p class="article-content">
+                    Chaque match doit produire un plan d'action concret. Suivez ces étapes immédiatement après votre duel :
+                </p>
+                <ol class="article-list-numbered">
+                    <li><strong>Exporter les questions</strong> : ouvrez l'historique de duel et copiez les thèmes qui vous ont posé problème.</li>
+                    <li><strong>Classer les erreurs</strong> : erreur de connaissance, de vocabulaire, de rapidité ou de stress. Cette classification vous aidera à appliquer le bon correctif.</li>
+                    <li><strong>Lancer un quiz ciblé</strong> : utilisez le mode Solo ou les playlists communautaires pour réviser les notions défaillantes dans l'heure qui suit.</li>
+                    <li><strong>Planifier un duel revanche</strong> : défiez un ami ou un bot avancé dans les 48 heures pour valider vos progrès.</li>
+                </ol>
+                <p class="article-content">
+                    En répétant ce cycle, vous transformerez chaque défaite en tremplin et consoliderez votre progression sur la durée.
+                </p>
+            </details>
         </article>
 
         <!-- Ads Section -->
@@ -223,18 +334,86 @@
             <h2 class="article-title"><i class="fas fa-graduation-cap"></i> Mythes Courants sur la Culture Générale et la Vérité</h2>
             <div class="article-meta">
                 <span><i class="fas fa-calendar"></i> 10 novembre 2024</span>
-                <span><i class="fas fa-clock"></i> 5 min de lecture</span>
+                <span><i class="fas fa-clock"></i> 6 min de lecture</span>
             </div>
             <p class="article-content">
-                De nombreuses personnes pensent à tort qu'avoir une bonne culture générale signifie mémoriser des faits. C'est une erreur ! Voici la vérité sur ce qu'est réellement une bonne culture générale :
+                La culture générale n'est pas un don réservé à quelques privilégiés. Elle se construit en déconstruisant des croyances tenaces. Voici quatre mythes qui freinent les apprenants et des pistes concrètes pour les dépasser.
             </p>
+            <h3 class="article-section-title">Mythe 1 : « La culture, c'est de la mémorisation brute »</h3>
             <p class="article-content">
-                <strong>Mythe 1 : "C'est juste de la mémorisation"</strong> - La vérité : c'est comprendre comment les concepts sont interconnectés et comment ils s'appliquent au monde réel.<br>
-                <strong>Mythe 2 : "Vous devez savoir tout"</strong> - La vérité : personne ne sait tout. La bonne culture générale c'est savoir où chercher l'information et comment l'évaluer.<br>
-                <strong>Mythe 3 : "C'est ennuyeux"</strong> - La vérité : apprendre de nouvelles choses peut être extrêmement amusant, surtout avec des outils comme Coup de Génie qui gamifient l'expérience.<br>
-                <strong>Mythe 4 : "Il n'y a pas de limite d'âge"</strong> - La vérité : n'importe qui, à n'importe quel âge, peut améliorer sa culture générale. C'est un processus continu.
+                En réalité, ce qui compte est la capacité à relier les informations. Utilisez les cartes mentales intégrées au tableau d'apprentissage Coup de Génie pour cartographier un sujet : placez le thème central, puis ajoutez des liens cause/conséquence.
             </p>
-            <span class="read-more"><i class="fas fa-arrow-right"></i> Article complet</span>
+            <h3 class="article-section-title">Mythe 2 : « Je dois tout retenir »</h3>
+            <p class="article-content">
+                Personne ne sait tout. L'objectif est d'identifier rapidement la ressource adaptée. Créez des collections de liens ou de livres dans votre profil et classez-les par niveau de difficulté. Vous gagnerez un temps précieux lors de vos révisions.
+            </p>
+            <h3 class="article-section-title">Mythe 3 : « Apprendre est forcément ennuyeux »</h3>
+            <p class="article-content">
+                La gamification est un levier puissant : défiez vos amis, rejoignez un club Coup de Génie ou participez à nos tournois mensuels. Le plaisir d'apprendre entretient la motivation sur le long terme.
+            </p>
+            <div class="article-highlight">
+                Rappelez-vous qu'une seule question bien comprise peut déclencher une chaîne d'apprentissages. Notez vos déclics dans la section « progrès » de votre tableau de bord pour visualiser vos avancées.
+            </div>
+            <details class="article-details">
+                <summary class="read-more"><i class="fas fa-arrow-right"></i> Transformer ces mythes en actions</summary>
+                <p class="article-content">
+                    Appliquez ce mini-plan pour faire évoluer votre perception :
+                </p>
+                <ol class="article-list-numbered">
+                    <li><strong>Diagnostiquer</strong> : identifiez le mythe qui vous freine le plus et écrivez un exemple concret où il vous a limité.</li>
+                    <li><strong>Tester</strong> : choisissez un défi Coup de Génie correspondant (ex. duel aléatoire) et observez comment votre croyance influence vos réponses.</li>
+                    <li><strong>Corriger</strong> : trouvez une ressource externe (podcast, ouvrage, newsletter) qui contredit ce mythe et résumez-la en 5 points.</li>
+                    <li><strong>Partager</strong> : exposez vos conclusions à la communauté ou à un proche ; enseigner solidifie votre réflexion.</li>
+                </ol>
+                <p class="article-content">
+                    En quelques semaines, vous remplacerez les croyances limitantes par une vision dynamique et inclusive de la culture générale.
+                </p>
+            </details>
+        </article>
+
+        <article class="article-card">
+            <h2 class="article-title"><i class="fas fa-compass"></i> Programme 30 Jours pour Booster Votre Culture Générale</h2>
+            <div class="article-meta">
+                <span><i class="fas fa-calendar"></i> 10 novembre 2024</span>
+                <span><i class="fas fa-clock"></i> 8 min de lecture</span>
+            </div>
+            <p class="article-content">
+                Vous ne savez pas par où commencer ? Suivez ce plan progressif de 30 jours. Chaque semaine possède un objectif clair, des ressources à consulter et des défis Coup de Génie pour valider vos acquis.
+            </p>
+            <h3 class="article-section-title">Semaine 1 : Cartographier vos connaissances</h3>
+            <p class="article-content">
+                Évaluez votre niveau initial en réalisant trois quiz aléatoires. Notez les catégories récurrentes et fixez un objectif chiffré (ex. +80 points ELO). Complétez avec une lecture de synthèse comme « Le dessous des cartes » pour élargir votre panorama.
+            </p>
+            <h3 class="article-section-title">Semaine 2 : Consolider les fondamentaux</h3>
+            <p class="article-content">
+                Choisissez deux domaines faibles et construisez une mini-bibliothèque : un documentaire, un article scientifique et une fiche Coup de Génie sauvegardée dans votre profil. Testez-vous chaque soir sur cinq questions ciblées.
+            </p>
+            <h3 class="article-section-title">Semaine 3 : Passer en mode duel</h3>
+            <p class="article-content">
+                Lancez un duel par jour à un horaire fixe. Utilisez le replay pour analyser vos réponses et calibrer votre prise de décision. Intégrez au moins une session de méditation ou de respiration pour maîtriser votre stress avant le match.
+            </p>
+            <h3 class="article-section-title">Semaine 4 : Capitaliser et partager</h3>
+            <p class="article-content">
+                Organisez un quiz collectif (amis, collègues, famille) et endossez le rôle d'animateur. Préparez dix questions issues de Coup de Génie et complétez-les avec des anecdotes ou des images. Cette transmission renforce durablement votre mémoire.
+            </p>
+            <div class="article-highlight">
+                Objectif final : comparer vos statistiques initiales et finales. Surveillez la progression du temps moyen de réponse, du taux de bonnes réponses et de votre classement ELO. Ajustez ensuite le programme pour un deuxième cycle plus ambitieux.
+            </div>
+            <details class="article-details">
+                <summary class="read-more"><i class="fas fa-arrow-right"></i> Ressources complémentaires</summary>
+                <p class="article-content">
+                    Pour nourrir votre parcours, explorez ces pistes :
+                </p>
+                <ul class="article-list">
+                    <li>Une newsletter hebdomadaire dédiée aux sciences pour rester à jour.</li>
+                    <li>Un podcast historique court (10 minutes) à écouter chaque matin.</li>
+                    <li>Une visite de musée virtuelle par semaine, suivie d'un quiz sur le thème.</li>
+                    <li>Un carnet numérique partagé avec vos amis pour échanger vos découvertes.</li>
+                </ul>
+                <p class="article-content">
+                    Gardez le cap après ces 30 jours en alternant périodes d'approfondissement et défis compétitifs. La régularité est votre meilleur allié.
+                </p>
+            </details>
         </article>
     </main>
 

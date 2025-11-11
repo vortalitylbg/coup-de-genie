@@ -2,6 +2,101 @@
 // FIREBASE CONFIGURATION
 // ===========================
 
+const CMP_SCRIPT_ID = 'google-funding-choices';
+(function loadFundingChoices() {
+    const CMP_URL = 'https://fundingchoicesmessages.google.com/i/pub-6310403411998518?ers=1';
+    function injectScript() {
+        if (document.getElementById(CMP_SCRIPT_ID)) {
+            return;
+        }
+        const script = document.createElement('script');
+        script.id = CMP_SCRIPT_ID;
+        script.async = true;
+        script.src = CMP_URL;
+        document.head.appendChild(script);
+    }
+    function signalPresent() {
+        if (window.frames.googlefcPresent) {
+            return;
+        }
+        if (document.body) {
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'width:0;height:0;border:0;display:none';
+            iframe.name = 'googlefcPresent';
+            document.body.appendChild(iframe);
+            return;
+        }
+        setTimeout(signalPresent, 0);
+    }
+    function start() {
+        injectScript();
+        signalPresent();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+        return;
+    }
+    start();
+})();
+
+window.dataLayer = window.dataLayer || [];
+function gtag() {
+    window.dataLayer.push(arguments);
+}
+if (!window.gtag) {
+    window.gtag = gtag;
+}
+window.gtag('consent', 'default', { ad_storage: 'denied', analytics_storage: 'denied' });
+
+const BANNED_DISPLAY_NAME_WORDS = [
+    'fuck',
+    'shit',
+    'bitch',
+    'asshole',
+    'pute',
+    'salope',
+    'connard',
+    'merde',
+    'porn',
+    'sexe',
+    'sexy',
+    'xxx',
+    'hitler'
+];
+
+function stripAccents(value) {
+    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function sanitizeDisplayName(value) {
+    if (value === null || value === undefined) {
+        return '';
+    }
+    let sanitized = String(value);
+    sanitized = sanitized.replace(/<[^>]*>/g, ' ');
+    sanitized = sanitized.replace(/[\u0000-\u001F\u007F]/g, ' ');
+    sanitized = sanitized.replace(/[\u200B-\u200D\u2060\uFEFF]/g, '');
+    sanitized = sanitized.normalize('NFKC');
+    sanitized = sanitized.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9 _'’.-]/g, '');
+    sanitized = sanitized.replace(/\s+/g, ' ').trim();
+    if (!sanitized) {
+        return '';
+    }
+    if (sanitized.length > 30) {
+        sanitized = sanitized.slice(0, 30).trim();
+    }
+    const normalized = stripAccents(sanitized).toLowerCase();
+    for (let i = 0; i < BANNED_DISPLAY_NAME_WORDS.length; i++) {
+        if (normalized.includes(BANNED_DISPLAY_NAME_WORDS[i])) {
+            return '';
+        }
+    }
+    if (normalized.includes('http') || normalized.includes('www.')) {
+        return '';
+    }
+    return sanitized;
+}
+
 // Configuration Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCSF-_hzGJBiNKjAWT3CGuld5mRQU6SfSk",
@@ -24,15 +119,54 @@ try {
 // Initialiser les services
 const auth = firebase.auth();
 const db = firebase.firestore();
-const analytics = firebase.analytics();
+let analytics = null;
+let analyticsInitialized = false;
 const ADSENSE_CLIENT_ID = 'ca-pub-6310403411998518';
 const CONSENT_STORAGE_KEY = 'cg_ads_consent';
 let consentPreferencesButton = null;
 
+function setAnalyticsInstance(instance) {
+    analytics = instance || null;
+    window.analytics = instance || null;
+}
+
+function activateAnalytics() {
+    if (analyticsInitialized) {
+        if (analytics && typeof analytics.setAnalyticsCollectionEnabled === 'function') {
+            analytics.setAnalyticsCollectionEnabled(true);
+        }
+        return;
+    }
+    if (typeof firebase.analytics !== 'function') {
+        return;
+    }
+    const instance = firebase.analytics();
+    setAnalyticsInstance(instance);
+    if (instance && typeof instance.setAnalyticsCollectionEnabled === 'function') {
+        instance.setAnalyticsCollectionEnabled(true);
+    }
+    analyticsInitialized = true;
+    console.log('📈 Firebase Analytics activé après consentement');
+}
+
+function disableAnalytics() {
+    if (analytics && typeof analytics.setAnalyticsCollectionEnabled === 'function') {
+        try {
+            analytics.setAnalyticsCollectionEnabled(false);
+        } catch (error) {
+            console.warn('Impossible de désactiver Firebase Analytics', error);
+        }
+    }
+    analyticsInitialized = false;
+    setAnalyticsInstance(null);
+}
+
+setAnalyticsInstance(null);
+
 console.log('✅ Services Firebase initialisés:', {
     auth: !!auth,
     db: !!db,
-    analytics: !!analytics
+    analytics: analyticsInitialized
 });
 
 // ===========================
@@ -58,18 +192,21 @@ async function signIn(email, password) {
  */
 async function signUp(email, password, displayName) {
     try {
+        const sanitizedName = sanitizeDisplayName(displayName);
+        if (!sanitizedName || sanitizedName.length < 3) {
+            return { success: false, error: 'Le pseudo doit contenir entre 3 et 30 caractères sans langage offensant' };
+        }
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
+        const safeDisplayName = sanitizedName;
         
-        // Mettre à jour le profil avec le nom d'affichage
         await user.updateProfile({
-            displayName: displayName
+            displayName: safeDisplayName
         });
         
-        // Créer le document utilisateur dans Firestore
         await db.collection('users').doc(user.uid).set({
             email: email,
-            displayName: displayName,
+            displayName: safeDisplayName,
             isAdmin: false,
             gamesPlayed: 0,
             totalScore: 0,
@@ -117,15 +254,20 @@ async function signInWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
-        
-        // Vérifier si c'est la première connexion
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        
+        const safeDisplayName = getSafeDisplayName(user.displayName, user.uid);
+        if (safeDisplayName !== user.displayName) {
+            try {
+                await user.updateProfile({ displayName: safeDisplayName });
+            } catch (profileError) {
+                console.warn('⚠️ Impossible de mettre à jour le pseudo Google:', profileError);
+            }
+        }
+        const userRef = db.collection('users').doc(user.uid);
+        const userDoc = await userRef.get();
         if (!userDoc.exists) {
-            // Créer le document utilisateur
-            await db.collection('users').doc(user.uid).set({
+            await userRef.set({
                 email: user.email,
-                displayName: user.displayName,
+                displayName: safeDisplayName,
                 isAdmin: false,
                 gamesPlayed: 0,
                 totalScore: 0,
@@ -135,7 +277,6 @@ async function signInWithGoogle() {
                 duelsWon: 0,
                 duelsLost: 0,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                // Premium fields
                 hasPremium: false,
                 premiumExpiry: null,
                 theme: 'default',
@@ -144,7 +285,6 @@ async function signInWithGoogle() {
                 tournaments: [],
                 achievements: [],
                 stripeCustomerId: null,
-                // Advanced stats fields
                 gameHistory: [],
                 categoryStats: {},
                 lastPlayedDate: null,
@@ -156,6 +296,11 @@ async function signInWithGoogle() {
                 eloHistory: [100],
                 rankHistory: []
             });
+        } else {
+            const storedName = sanitizeDisplayName(userDoc.data().displayName);
+            if (!storedName || storedName !== userDoc.data().displayName) {
+                await userRef.update({ displayName: storedName || safeDisplayName });
+            }
         }
         
         console.log('✅ Connexion Google réussie:', user.email);
@@ -188,8 +333,9 @@ function getCurrentUser() {
 }
 
 function getSafeDisplayName(rawName, uid) {
-    if (rawName && rawName.trim()) {
-        return rawName.trim();
+    const sanitized = sanitizeDisplayName(rawName);
+    if (sanitized) {
+        return sanitized;
     }
     if (uid) {
         const suffix = uid.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase();
@@ -223,6 +369,18 @@ function setConsentBannerVisibility(banner, visible) {
     }
 }
 
+function openConsentCenter() {
+    const banner = createConsentBanner();
+    setConsentBannerVisibility(banner, true);
+    if (window.googlefc && typeof window.googlefc.showDialog === 'function') {
+        try {
+            window.googlefc.showDialog();
+        } catch (error) {
+            console.warn('Impossible d\'ouvrir Funding Choices', error);
+        }
+    }
+}
+
 function ensureConsentPreferencesTrigger() {
     if (consentPreferencesButton || !document.body) {
         return;
@@ -232,10 +390,7 @@ function ensureConsentPreferencesTrigger() {
     button.className = 'consent-preferences-button';
     button.type = 'button';
     button.textContent = 'Gestion des cookies';
-    button.addEventListener('click', function () {
-        const banner = createConsentBanner();
-        setConsentBannerVisibility(banner, true);
-    });
+    button.addEventListener('click', openConsentCenter);
     const banner = document.getElementById('consentBanner');
     if (banner && banner.getAttribute('data-visible') === 'true') {
         button.style.display = 'none';
@@ -253,8 +408,16 @@ function handleConsentDecision(value) {
         console.warn('Stockage du consentement indisponible', error);
     }
     if (value === 'granted') {
+        if (typeof window.gtag === 'function') {
+            window.gtag('consent', 'update', { ad_storage: 'granted', analytics_storage: 'granted' });
+        }
+        activateAnalytics();
         loadAdSenseScript();
     } else {
+        if (typeof window.gtag === 'function') {
+            window.gtag('consent', 'update', { ad_storage: 'denied', analytics_storage: 'denied' });
+        }
+        disableAnalytics();
         const existingScript = document.querySelector('script[src*="googlesyndication.com/pagead/js/adsbygoogle.js"]');
         if (existingScript && existingScript.parentNode) {
             existingScript.parentNode.removeChild(existingScript);
@@ -283,20 +446,31 @@ function createConsentBanner() {
     banner.setAttribute('data-visible', 'false');
     banner.innerHTML = `
         <div class="consent-banner-content">
-            <div>
-                <h3 class="consent-banner-title">Gestion des cookies</h3>
-                <p class="consent-banner-text">Nous utilisons des cookies afin d'afficher des annonces Google AdSense. Vous pouvez accepter pour activer la publicité personnalisée ou refuser pour continuer sans annonces ciblées.</p>
+            <div class="consent-banner-visual">
+                <i class="fas fa-shield-heart"></i>
             </div>
-            <div class="consent-banner-actions">
-                <button type="button" class="consent-button consent-button-primary" data-action="accept">Accepter et continuer</button>
-                <button type="button" class="consent-button consent-button-secondary" data-action="reject">Continuer sans publicité personnalisée</button>
+            <div class="consent-banner-info">
+                <h3 class="consent-banner-title">Votre confidentialité compte</h3>
+                <p class="consent-banner-text">Coup de Génie utilise des cookies pour proposer des publicités Google pertinentes et mesurer l'audience du quiz. Vous avez le contrôle total sur vos choix.</p>
+                <ul class="consent-banner-list">
+                    <li><i class="fas fa-bullseye"></i><span>Publicités personnalisées uniquement après accord.</span></li>
+                    <li><i class="fas fa-chart-line"></i><span>Statistiques anonymes pour améliorer l'expérience.</span></li>
+                </ul>
+                <div class="consent-banner-actions">
+                    <button type="button" class="consent-button consent-button-secondary" data-action="reject">Continuer sans cookies</button>
+                    <button type="button" class="consent-button consent-button-primary" data-action="accept">Accepter tout</button>
+                </div>
+                <div class="consent-banner-links">
+                    <button type="button" class="consent-button consent-button-tertiary" data-action="preferences">Personnaliser</button>
+                    <a class="consent-banner-link" href="privacy.html">En savoir plus</a>
+                </div>
             </div>
-            <a class="consent-banner-link" href="privacy.html">En savoir plus</a>
         </div>
     `;
     document.body.appendChild(banner);
     const acceptButton = banner.querySelector('[data-action="accept"]');
     const rejectButton = banner.querySelector('[data-action="reject"]');
+    const preferencesButton = banner.querySelector('[data-action="preferences"]');
     if (acceptButton) {
         acceptButton.addEventListener('click', function () {
             handleConsentDecision('granted');
@@ -305,6 +479,17 @@ function createConsentBanner() {
     if (rejectButton) {
         rejectButton.addEventListener('click', function () {
             handleConsentDecision('denied');
+        });
+    }
+    if (preferencesButton) {
+        preferencesButton.addEventListener('click', function () {
+            if (window.googlefc && typeof window.googlefc.showDialog === 'function') {
+                try {
+                    window.googlefc.showDialog();
+                } catch (error) {
+                    console.warn('Impossible d\'ouvrir Funding Choices', error);
+                }
+            }
         });
     }
     return banner;
@@ -318,11 +503,19 @@ function initializeAdConsent() {
         console.warn('Lecture du consentement indisponible', error);
     }
     if (stored === 'granted') {
+        if (typeof window.gtag === 'function') {
+            window.gtag('consent', 'update', { ad_storage: 'granted', analytics_storage: 'granted' });
+        }
+        activateAnalytics();
         loadAdSenseScript();
         ensureConsentPreferencesTrigger();
         return;
     }
     if (stored === 'denied') {
+        if (typeof window.gtag === 'function') {
+            window.gtag('consent', 'update', { ad_storage: 'denied', analytics_storage: 'denied' });
+        }
+        disableAnalytics();
         window.adsbygoogle = window.adsbygoogle || [];
         window.adsbygoogle.length = 0;
         ensureConsentPreferencesTrigger();
@@ -1393,6 +1586,7 @@ window.loadQuestionsFromFirebase = loadQuestionsFromFirebase;
 window.addQuestion = addQuestion;
 window.updateQuestion = updateQuestion;
 window.deleteQuestion = deleteQuestion;
+window.sanitizeDisplayName = sanitizeDisplayName;
 window.getSafeDisplayName = getSafeDisplayName;
 window.migrateQuestionsToFirebase = migrateQuestionsToFirebase;
 window.saveGameResult = saveGameResult;
@@ -1490,28 +1684,18 @@ async function updateUserDisplayName(newDisplayName) {
         if (!user) {
             throw new Error('Vous devez être connecté');
         }
-        
-        // Vérifier que le pseudo n'est pas vide
-        if (!newDisplayName || newDisplayName.trim().length < 3) {
-            return { success: false, error: 'Le pseudo doit contenir au moins 3 caractères' };
+        const sanitizedName = sanitizeDisplayName(newDisplayName);
+        if (!sanitizedName || sanitizedName.length < 3) {
+            return { success: false, error: 'Le pseudo doit contenir entre 3 et 30 caractères sans langage offensant' };
         }
-        
-        if (newDisplayName.length > 30) {
-            return { success: false, error: 'Le pseudo ne doit pas dépasser 30 caractères' };
-        }
-        
-        // Mettre à jour le profil Firebase
         await user.updateProfile({
-            displayName: newDisplayName.trim()
+            displayName: sanitizedName
         });
-        
-        // Mettre à jour dans Firestore
         await db.collection('users').doc(user.uid).update({
-            displayName: newDisplayName.trim()
+            displayName: sanitizedName
         });
-        
-        console.log('✅ Pseudo mis à jour:', newDisplayName);
-        return { success: true };
+        console.log('✅ Pseudo mis à jour:', sanitizedName);
+        return { success: true, displayName: sanitizedName };
     } catch (error) {
         console.error('❌ Erreur mise à jour pseudo:', error);
         return { success: false, error: getErrorMessage(error.code) };

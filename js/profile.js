@@ -800,13 +800,14 @@ async function handleUpdateProfile(e) {
         const result = await updateUserDisplayName(newDisplayName);
 
         if (result.success) {
+            const updatedName = result.displayName || newDisplayName;
             showAlert('Pseudo mis à jour avec succès !', 'success');
-            profileState.stats.displayName = newDisplayName;
+            profileState.stats.displayName = updatedName;
             const displayNameElement = document.getElementById('displayNameDisplay');
-            displayNameElement.textContent = newDisplayName;
+            displayNameElement.textContent = updatedName;
             applyPseudoStyleToElement(displayNameElement, profileState.stats);
             document.getElementById('newDisplayName').value = '';
-            document.getElementById('newDisplayName').placeholder = newDisplayName;
+            document.getElementById('newDisplayName').placeholder = updatedName;
         } else {
             showAlert(result.error || 'Erreur lors de la mise à jour', 'error');
         }
