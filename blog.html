@@ -19,9 +19,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="assets/css/main.css">
     <link rel="stylesheet" href="assets/css/privacy.css">
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6310403411998518"
-         crossorigin="anonymous"></script>
     <style>
         .blog-container {
             max-width: 1000px;
@@ -253,6 +250,12 @@
         </div>
         <p>© <span id="currentYear"></span> Coup de génie. Tous droits réservés.</p>
     </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+    <script src="js/firebase.js"></script>
 
     <script>
         document.getElementById('currentYear').textContent = new Date().getFullYear();

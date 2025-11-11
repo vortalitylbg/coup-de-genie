@@ -373,6 +373,9 @@ window.onAuthStateChanged = function(isLoggedIn, user, isAdminUser) {
  * Charger et afficher le profil utilisateur avec son icône et couleur
  */
 async function loadAndDisplayUserProfile(user, btnConnexion) {
+    const pseudoName = typeof window.getSafeDisplayName === 'function'
+        ? window.getSafeDisplayName(user.displayName, user.uid)
+        : (user.displayName || 'Joueur');
     try {
         // Récupérer les données premium/profil
         const premiumData = await getPremiumData(user.uid);
@@ -383,7 +386,6 @@ async function loadAndDisplayUserProfile(user, btnConnexion) {
         
         // Récupérer les infos de l'icône
         let profileImageHTML = '';
-        const pseudoName = user.displayName || user.email;
         
         // Construire la couleur du pseudo
         let pseudoColor = premiumData.profileColor || '#ffffff';
@@ -438,7 +440,7 @@ async function loadAndDisplayUserProfile(user, btnConnexion) {
         
         newBtn.innerHTML = `
             <i class="fas fa-user-circle"></i>
-            <span>${user.displayName || user.email}</span>
+            <span>${pseudoName}</span>
         `;
         
         newBtn.addEventListener('click', function(e) {

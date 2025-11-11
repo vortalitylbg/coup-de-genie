@@ -43,6 +43,16 @@ let duelState = {
     isPenaltyActive: false
 };
 
+function resolvePlayerName(player) {
+    if (!player) {
+        return 'Joueur-Anonyme';
+    }
+    if (typeof window.getSafeDisplayName === 'function') {
+        return window.getSafeDisplayName(player.displayName, player.uid);
+    }
+    return player.displayName || 'Joueur-Anonyme';
+}
+
 // ===========================
 // INITIALIZATION
 // ===========================
@@ -463,14 +473,14 @@ function showWaitingScreen(duelData) {
     waitingScreen.classList.remove('hidden');
     
     // Afficher les infos des joueurs
-    document.getElementById('player1Name').textContent = duelData.player1.displayName;
+    document.getElementById('player1Name').textContent = resolvePlayerName(duelData.player1);
     document.getElementById('player1Elo').textContent = duelData.player1.elo;
-    document.getElementById('player1Name2').textContent = duelData.player1.displayName;
+    document.getElementById('player1Name2').textContent = resolvePlayerName(duelData.player1);
     
     if (duelData.player2) {
-        document.getElementById('player2Name').textContent = duelData.player2.displayName;
+        document.getElementById('player2Name').textContent = resolvePlayerName(duelData.player2);
         document.getElementById('player2Elo').textContent = duelData.player2.elo;
-        document.getElementById('player2Name2').textContent = duelData.player2.displayName;
+        document.getElementById('player2Name2').textContent = resolvePlayerName(duelData.player2);
     }
     
     // Charger les profils des joueurs (icônes + couleurs)
@@ -618,7 +628,7 @@ function updatePlayerCards(duelData) {
     
     // Player 1
     const player1Card = document.getElementById('player1Card');
-    document.getElementById('player1NameGame').textContent = duelData.player1.displayName;
+    document.getElementById('player1NameGame').textContent = resolvePlayerName(duelData.player1);
     document.getElementById('player1EloGame').textContent = duelData.player1.elo;
     
     // 🎯 Afficher le score depuis Firestore (mise à jour en temps réel)
@@ -631,7 +641,7 @@ function updatePlayerCards(duelData) {
     // Player 2
     if (duelData.player2) {
         const player2Card = document.getElementById('player2Card');
-        document.getElementById('player2NameGame').textContent = duelData.player2.displayName;
+        document.getElementById('player2NameGame').textContent = resolvePlayerName(duelData.player2);
         document.getElementById('player2EloGame').textContent = duelData.player2.elo;
         
         // 🎯 Afficher le score depuis Firestore (mise à jour en temps réel)
@@ -1121,12 +1131,12 @@ function showResults(duelData) {
     eloChangeElement.className = `elo-change ${eloChange >= 0 ? 'positive' : 'negative'}`;
     
     // Afficher les stats des joueurs (temps restant au lieu du score)
-    document.getElementById('player1NameResult').textContent = currentPlayer.displayName;
+    document.getElementById('player1NameResult').textContent = resolvePlayerName(currentPlayer);
     document.getElementById('player1FinalScore').textContent = `${Math.floor(currentPlayer.timeRemaining || 0)}s`;
     document.getElementById('player1Correct').textContent = currentPlayer.correctAnswers || 0;
     document.getElementById('player1NewElo').textContent = currentPlayer.elo + eloChange;
     
-    document.getElementById('player2NameResult').textContent = opponent.displayName;
+    document.getElementById('player2NameResult').textContent = resolvePlayerName(opponent);
     document.getElementById('player2FinalScore').textContent = `${Math.floor(opponent.timeRemaining || 0)}s`;
     document.getElementById('player2Correct').textContent = opponent.correctAnswers || 0;
     document.getElementById('player2NewElo').textContent = opponent.elo + opponentEloChange;
@@ -1165,11 +1175,11 @@ async function loadBothPlayerProfiles(duelData) {
         console.log('👥 Chargement des profils des deux joueurs...');
         
         // Charger le profil du joueur 1
-        await loadDuelPlayerProfile(1, duelData.player1.uid, duelData.player1.displayName);
+        await loadDuelPlayerProfile(1, duelData.player1.uid, resolvePlayerName(duelData.player1));
         
         // Charger le profil du joueur 2 si présent
         if (duelData.player2) {
-            await loadDuelPlayerProfile(2, duelData.player2.uid, duelData.player2.displayName);
+            await loadDuelPlayerProfile(2, duelData.player2.uid, resolvePlayerName(duelData.player2));
         }
         
         console.log('✅ Profils des joueurs chargés');
@@ -1183,6 +1193,9 @@ async function loadBothPlayerProfiles(duelData) {
  */
 async function loadDuelPlayerProfile(playerNumber, userId, displayName) {
     try {
+        const safeDisplayName = typeof window.getSafeDisplayName === 'function'
+            ? window.getSafeDisplayName(displayName, userId)
+            : (displayName || 'Joueur-Anonyme');
         // Vérifier si le joueur est premium
         const hasPremium = await isPremium(userId);
         
@@ -1205,6 +1218,13 @@ async function loadDuelPlayerProfile(playerNumber, userId, displayName) {
         const waitingFallbackIcon = document.getElementById(`duelPlayer${playerNumber}FallbackIcon`);
         const waitingCrownElement = document.getElementById(`duelPlayer${playerNumber}PremiumCrown`);
         const gameCrownElement = document.getElementById(`duelPlayer${playerNumber}GameCrown`);
+        
+        if (waitingNameElement) {
+            waitingNameElement.textContent = safeDisplayName;
+        }
+        if (gameNameElement) {
+            gameNameElement.textContent = safeDisplayName;
+        }
         
         console.log(`🔍 Éléments trouvés pour joueur ${playerNumber}:`, {
             waitingIcon: !!waitingIconElement,

@@ -25,6 +25,9 @@ try {
 const auth = firebase.auth();
 const db = firebase.firestore();
 const analytics = firebase.analytics();
+const ADSENSE_CLIENT_ID = 'ca-pub-6310403411998518';
+const CONSENT_STORAGE_KEY = 'cg_ads_consent';
+let consentPreferencesButton = null;
 
 console.log('✅ Services Firebase initialisés:', {
     auth: !!auth,
@@ -183,6 +186,155 @@ async function signOut() {
 function getCurrentUser() {
     return auth.currentUser;
 }
+
+function getSafeDisplayName(rawName, uid) {
+    if (rawName && rawName.trim()) {
+        return rawName.trim();
+    }
+    if (uid) {
+        const suffix = uid.replace(/[^a-zA-Z0-9]/g, '').slice(-6).toUpperCase();
+        if (suffix) {
+            return `Joueur-${suffix}`;
+        }
+    }
+    return 'Joueur-Anonyme';
+}
+
+function loadAdSenseScript() {
+    if (window.__adsenseLoaded) {
+        return;
+    }
+    window.adsbygoogle = window.adsbygoogle || [];
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
+    script.crossOrigin = 'anonymous';
+    document.head.appendChild(script);
+    window.__adsenseLoaded = true;
+}
+
+function setConsentBannerVisibility(banner, visible) {
+    if (!banner) {
+        return;
+    }
+    banner.setAttribute('data-visible', visible ? 'true' : 'false');
+    if (consentPreferencesButton) {
+        consentPreferencesButton.style.display = visible ? 'none' : 'inline-flex';
+    }
+}
+
+function ensureConsentPreferencesTrigger() {
+    if (consentPreferencesButton || !document.body) {
+        return;
+    }
+    const button = document.createElement('button');
+    button.id = 'consentPreferencesButton';
+    button.className = 'consent-preferences-button';
+    button.type = 'button';
+    button.textContent = 'Gestion des cookies';
+    button.addEventListener('click', function () {
+        const banner = createConsentBanner();
+        setConsentBannerVisibility(banner, true);
+    });
+    const banner = document.getElementById('consentBanner');
+    if (banner && banner.getAttribute('data-visible') === 'true') {
+        button.style.display = 'none';
+    } else {
+        button.style.display = 'inline-flex';
+    }
+    consentPreferencesButton = button;
+    document.body.appendChild(button);
+}
+
+function handleConsentDecision(value) {
+    try {
+        localStorage.setItem(CONSENT_STORAGE_KEY, value);
+    } catch (error) {
+        console.warn('Stockage du consentement indisponible', error);
+    }
+    if (value === 'granted') {
+        loadAdSenseScript();
+    } else {
+        const existingScript = document.querySelector('script[src*="googlesyndication.com/pagead/js/adsbygoogle.js"]');
+        if (existingScript && existingScript.parentNode) {
+            existingScript.parentNode.removeChild(existingScript);
+        }
+        window.__adsenseLoaded = false;
+        if (window.adsbygoogle && Array.isArray(window.adsbygoogle)) {
+            window.adsbygoogle.length = 0;
+        }
+    }
+    const banner = document.getElementById('consentBanner');
+    setConsentBannerVisibility(banner, false);
+    ensureConsentPreferencesTrigger();
+}
+
+function createConsentBanner() {
+    if (!document.body) {
+        return null;
+    }
+    let banner = document.getElementById('consentBanner');
+    if (banner) {
+        return banner;
+    }
+    banner = document.createElement('div');
+    banner.id = 'consentBanner';
+    banner.className = 'consent-banner';
+    banner.setAttribute('data-visible', 'false');
+    banner.innerHTML = `
+        <div class="consent-banner-content">
+            <div>
+                <h3 class="consent-banner-title">Gestion des cookies</h3>
+                <p class="consent-banner-text">Nous utilisons des cookies afin d'afficher des annonces Google AdSense. Vous pouvez accepter pour activer la publicité personnalisée ou refuser pour continuer sans annonces ciblées.</p>
+            </div>
+            <div class="consent-banner-actions">
+                <button type="button" class="consent-button consent-button-primary" data-action="accept">Accepter et continuer</button>
+                <button type="button" class="consent-button consent-button-secondary" data-action="reject">Continuer sans publicité personnalisée</button>
+            </div>
+            <a class="consent-banner-link" href="privacy.html">En savoir plus</a>
+        </div>
+    `;
+    document.body.appendChild(banner);
+    const acceptButton = banner.querySelector('[data-action="accept"]');
+    const rejectButton = banner.querySelector('[data-action="reject"]');
+    if (acceptButton) {
+        acceptButton.addEventListener('click', function () {
+            handleConsentDecision('granted');
+        });
+    }
+    if (rejectButton) {
+        rejectButton.addEventListener('click', function () {
+            handleConsentDecision('denied');
+        });
+    }
+    return banner;
+}
+
+function initializeAdConsent() {
+    let stored = null;
+    try {
+        stored = localStorage.getItem(CONSENT_STORAGE_KEY);
+    } catch (error) {
+        console.warn('Lecture du consentement indisponible', error);
+    }
+    if (stored === 'granted') {
+        loadAdSenseScript();
+        ensureConsentPreferencesTrigger();
+        return;
+    }
+    if (stored === 'denied') {
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.length = 0;
+        ensureConsentPreferencesTrigger();
+        return;
+    }
+    const banner = createConsentBanner();
+    setConsentBannerVisibility(banner, true);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    initializeAdConsent();
+});
 
 /**
  * Attendre que Firebase restaure l'état d'authentification
@@ -578,6 +730,7 @@ async function createDuel(categories) {
         
         const userData = userDoc.data();
         const playerElo = userData.elo || 100;
+        const playerDisplayName = getSafeDisplayName(userData.displayName || user.displayName, user.uid);
         console.log('✅ ELO du joueur:', playerElo);
         
         // Créer le duel
@@ -585,7 +738,7 @@ async function createDuel(categories) {
         const duelRef = await db.collection('duels').add({
             player1: {
                 uid: user.uid,
-                displayName: user.displayName || user.email,
+                displayName: playerDisplayName,
                 elo: playerElo,
                 timeRemaining: 60, // 60 secondes par joueur
                 correctAnswers: 0,
@@ -637,6 +790,7 @@ async function joinDuel(categories) {
         
         const userData = userDoc.data();
         const playerElo = userData.elo || 100;
+        const playerDisplayName = getSafeDisplayName(userData.displayName || user.displayName, user.uid);
         console.log('✅ ELO du joueur:', playerElo);
         
         // Chercher un duel en attente avec un ELO similaire (+/- 100)
@@ -703,7 +857,7 @@ async function joinDuel(categories) {
         await db.collection('duels').doc(duelId).update({
             player2: {
                 uid: user.uid,
-                displayName: user.displayName || user.email,
+                displayName: playerDisplayName,
                 elo: playerElo,
                 timeRemaining: 60, // 60 secondes par joueur
                 correctAnswers: 0,
@@ -1148,10 +1302,11 @@ async function getLeaderboard(limit = 100) {
         const leaderboard = [];
         snapshot.forEach((doc, index) => {
             const data = doc.data();
+            const safeDisplayName = getSafeDisplayName(data.displayName, doc.id);
             leaderboard.push({
                 rank: index + 1,
                 uid: doc.id,
-                displayName: data.displayName || data.email,
+                displayName: safeDisplayName,
                 elo: data.elo || 100,
                 duelsPlayed: data.duelsPlayed || 0,
                 duelsWon: data.duelsWon || 0,
@@ -1238,6 +1393,7 @@ window.loadQuestionsFromFirebase = loadQuestionsFromFirebase;
 window.addQuestion = addQuestion;
 window.updateQuestion = updateQuestion;
 window.deleteQuestion = deleteQuestion;
+window.getSafeDisplayName = getSafeDisplayName;
 window.migrateQuestionsToFirebase = migrateQuestionsToFirebase;
 window.saveGameResult = saveGameResult;
 window.getUserStats = getUserStats;

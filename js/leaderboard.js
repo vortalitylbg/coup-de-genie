@@ -132,6 +132,9 @@ function displayLeaderboard(leaderboard, currentUserId) {
     leaderboard.forEach(player => {
         const row = document.createElement('div');
         row.className = 'leaderboard-row';
+        const playerName = typeof window.getSafeDisplayName === 'function'
+            ? window.getSafeDisplayName(player.displayName, player.uid)
+            : (player.displayName || 'Joueur');
         
         // Mettre en évidence le joueur actuel
         if (player.uid === currentUserId) {
@@ -159,7 +162,7 @@ function displayLeaderboard(leaderboard, currentUserId) {
             <div class="rank-cell ${rankClass}">${rankIcon}#${player.rank}</div>
             <div class="player-name-cell">
                 <i class="fas fa-user" style="color: var(--primary-purple);"></i>
-                <span>${player.displayName}</span>
+                <span>${playerName}</span>
                 ${player.uid === currentUserId ? '<span style="color: var(--accent-gold); font-size: 0.8rem; margin-left: 0.5rem;">(Vous)</span>' : ''}
             </div>
             <div class="rank-badge-cell">
